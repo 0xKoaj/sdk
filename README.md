@@ -1,6 +1,6 @@
 # Web3 SDK
 
-A comprehensive TypeScript SDK for interacting with the different contracts and accounts accross multiple networks.
+A comprehensive TypeScript SDK for interacting with the different contracts and accounts across multiple networks. Supports both **EVM chains** (Ethereum, Optimism, Arbitrum, etc.) and **Solana**.
 
 ## 🧪 Installation
 
@@ -58,7 +58,7 @@ const accountAllowances = await sdk.allowanceService.getAllowances({
 });
 ```
 
-### 🔄 Getting Trade Quotes
+### 🔄 Getting Trade Quotes (EVM)
 
 ```typescript
 const allQuotes = await sdk.quoteService.getAllQuotesWithTxs({
@@ -84,28 +84,151 @@ const allQuotes = await sdk.quoteService.getAllQuotesWithTxs({
 });
 ```
 
+### 🌞 Getting Trade Quotes (Solana)
+
+```typescript
+import { SolanaChains, SolanaAddresses } from "@nchamo/sdk";
+
+const solanaQuotes = await sdk.quoteService.getAllQuotesWithTxs({
+  request: {
+    chainId: SolanaChains.SOLANA.chainId, // 'solana'
+    sellToken: SolanaAddresses.NATIVE_SOL, // SOL
+    buyToken: SolanaAddresses.USDC, // USDC on Solana
+    order: {
+      type: "sell",
+      sellAmount: BigInt(1_000_000_000), // 1 SOL (9 decimals)
+    },
+    slippagePercentage: 1,
+    takerAddress: "YourSolanaPublicKey...", // Solana wallet public key (base58)
+  },
+  config: {
+    sourceConfig: {
+      jupiter: {
+        apiKey: process.env.JUPITER_API_KEY, // Required for Jupiter
+      },
+    },
+  },
+});
+```
+
 ## Overview
 
 The Web3 SDK provides efficient tools to manage token balances, retrieve trade quotes from DEX aggregators, and check token holdings across multiple chains. It's designed to be modular, with each functionality organized into specialized services that handle specific aspects of blockchain interaction.
+
+### Multi-Chain Support
+
+The SDK supports two types of blockchain networks:
+
+- **EVM Chains**: Ethereum, Optimism, Arbitrum, Polygon, Base, BNB Chain, and 40+ other EVM-compatible networks
+- **Solana**: Full support for Solana mainnet with Jupiter DEX aggregator integration
 
 ### Available Services
 
 The SDK is divided into the following services:
 
-- **[Allowances Service](#allowances-service)**: Manage token approvals and permissions across different chains
+- **[Allowances Service](#allowances-service)**: Manage token approvals and permissions across EVM chains
 - **[Balances Service](#balances-service)**: Query token balances across multiple chains and tokens
-- **[Quotes Service](#quotes-service)**: Get optimized swap quotes from various DEX aggregators
-- **[Gas Service](#gas-service)**: Optimize transaction costs and estimate gas prices
+- **[Quotes Service](#quotes-service)**: Get optimized swap quotes from various DEX aggregators (EVM and Solana)
+- **[Gas Service](#gas-service)**: Optimize transaction costs and estimate gas prices (EVM only)
 - **[Prices Service](#prices-service)**: Retrieve token price information across multiple chains
 - **[Metadata Service](#metadata-service)**: Access token metadata and information
 
 Each service provides a focused set of functionality while maintaining a consistent interface and error handling approach. This modular design allows developers to use only the services they need while ensuring a cohesive experience across the entire SDK.
+
+## Multi-Chain Architecture
+
+The SDK uses a unified type system to support both EVM and Solana chains.
+
+### Chain Types
+
+```typescript
+import {
+  Chains, // All chains (EVM + Solana)
+  EVMChains, // Only EVM chains
+  SolanaChains, // Only Solana chains
+  isEVMChain, // Type guard for EVM chains
+  isSolanaChain, // Type guard for Solana chains
+} from "@nchamo/sdk";
+
+// Access EVM chains
+const ethereum = EVMChains.ETHEREUM; // chainId: 1 (number)
+const optimism = EVMChains.OPTIMISM; // chainId: 10 (number)
+
+// Access Solana chains
+const solana = SolanaChains.SOLANA; // chainId: 'solana' (string)
+const devnet = SolanaChains.SOLANA_DEVNET; // chainId: 'solana' (testnet)
+
+// Combined access
+const anyChain = Chains.ETHEREUM; // Works for both
+const solanaChain = Chains.SOLANA; // Works for both
+```
+
+### ChainId Type
+
+The `ChainId` type is a union that supports both EVM (numeric) and Solana (string) identifiers:
+
+```typescript
+type ChainId = number | string;
+
+// EVM chainIds are numbers
+const ethChainId: ChainId = 1;
+const arbitrumChainId: ChainId = 42161;
+
+// Solana chainId is a string
+const solanaChainId: ChainId = "solana";
+```
+
+### Type Guards
+
+Use type guards to handle chain-specific logic:
+
+```typescript
+import { isEVMChain, isSolanaChain, getChainByKey } from "@nchamo/sdk";
+
+const chain = getChainByKey(chainId);
+
+if (isEVMChain(chain)) {
+  // TypeScript knows this is EVMChain
+  console.log(chain.wToken); // 0x... (EVM address)
+}
+
+if (isSolanaChain(chain)) {
+  // TypeScript knows this is SolanaChain
+  console.log(chain.nativeCurrency.mint); // So111... (Solana mint address)
+}
+```
+
+### Token Addresses
+
+Token addresses differ between chains:
+
+| Chain Type | Address Format | Example                                               |
+| ---------- | -------------- | ----------------------------------------------------- |
+| EVM        | Hex (0x...)    | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48` (USDC)   |
+| Solana     | Base58         | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (USDC) |
+
+### Common Addresses
+
+```typescript
+import { Addresses, SolanaAddresses } from "@nchamo/sdk";
+
+// EVM native token representation
+Addresses.NATIVE_TOKEN; // '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+Addresses.ZERO_ADDRESS; // '0x0000000000000000000000000000000000000000'
+
+// Solana common tokens
+SolanaAddresses.NATIVE_SOL; // 'So11111111111111111111111111111111111111112' (Wrapped SOL)
+SolanaAddresses.USDC; // 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+SolanaAddresses.USDT; // 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+```
 
 ## Services
 
 ### Allowances Service
 
 The Allowances Service provides functionality to check and manage token allowances across different chains.
+
+> **Note**: The Allowances Service is only applicable to **EVM chains**. Solana uses a different authorization model where token approvals are not required for swaps through Jupiter.
 
 #### Objective and Potential
 
@@ -272,6 +395,99 @@ The Quotes Service provides comprehensive functionality for getting trade quotes
   - Cross-chain arbitrage opportunities
   - Automated trading systems
   - Price impact analysis
+
+#### Supported Quote Sources
+
+##### EVM Quote Sources
+
+The SDK supports multiple DEX aggregators for EVM chains including:
+
+- 1inch, 0x, Paraswap, Kyber, OpenOcean, and more
+
+##### Solana Quote Sources
+
+For Solana, the SDK integrates with **Jupiter**, the leading DEX aggregator on Solana:
+
+| Source  | Chain  | Buy Orders | Swap & Transfer | API Key Required |
+| ------- | ------ | ---------- | --------------- | ---------------- |
+| Jupiter | Solana | ✅ Yes     | ❌ No           | ✅ Yes           |
+
+**Jupiter Configuration:**
+
+```typescript
+const quotes = await sdk.quoteService.getAllQuotesWithTxs({
+  request: {
+    chainId: SolanaChains.SOLANA.chainId,
+    sellToken: SolanaAddresses.NATIVE_SOL,
+    buyToken: SolanaAddresses.USDC,
+    order: { type: "sell", sellAmount: BigInt(1_000_000_000) },
+    slippagePercentage: 1,
+    takerAddress: "YourSolanaPublicKey...",
+  },
+  config: {
+    sourceConfig: {
+      jupiter: {
+        apiKey: "your-jupiter-api-key", // Required
+        slippageBps: 100, // Optional: override slippage in basis points
+        onlyDirectRoutes: false, // Optional: only use direct routes
+        maxAccounts: 64, // Optional: max accounts in transaction
+      },
+    },
+  },
+});
+```
+
+> **Note**: To obtain a Jupiter API key, visit [Jupiter's Developer Portal](https://dev.jup.ag/).
+
+#### Transaction Types
+
+The SDK returns different transaction formats for EVM and Solana:
+
+##### EVM Transactions
+
+```typescript
+type EVMTransaction = {
+  type?: "evm"; // Optional, defaults to 'evm'
+  to: string; // Contract address
+  calldata: string; // Encoded function call
+  value?: bigint; // Native token amount (ETH, etc.)
+};
+```
+
+##### Solana Transactions
+
+```typescript
+type SolanaTransaction = {
+  type: "solana";
+  swapTransaction: string; // Base64 encoded transaction
+  lastValidBlockHeight?: number; // Transaction validity window
+};
+```
+
+##### Handling Both Transaction Types
+
+```typescript
+import { isEVMTransaction, isSolanaTransaction } from "@nchamo/sdk";
+
+const quote = await sdk.quoteService.getBestQuote({ ... });
+
+if (isEVMTransaction(quote.tx)) {
+  // Send EVM transaction
+  const txResponse = await signer.sendTransaction({
+    to: quote.tx.to,
+    data: quote.tx.calldata,
+    value: quote.tx.value,
+  });
+}
+
+if (isSolanaTransaction(quote.tx)) {
+  // Decode and send Solana transaction
+  const transaction = VersionedTransaction.deserialize(
+    Buffer.from(quote.tx.swapTransaction, 'base64')
+  );
+  const signature = await connection.sendTransaction(transaction);
+}
+```
 
 #### Methods
 
@@ -460,6 +676,8 @@ const allTxs = await sdk.quoteService.buildAllTxs({
 ### Gas Service
 
 The Gas Service provides gas price estimation and optimization across different chains.
+
+> **Note**: The Gas Service is only applicable to **EVM chains**. Solana uses a different fee model based on **compute units** and **prioritization fees**, which are handled automatically by quote sources like Jupiter.
 
 #### Objective and Potential
 
@@ -791,6 +1009,55 @@ const quotes = await sdk.quoteService.getAllQuotes({
     }
   }
 });
+```
+
+### Solana Configuration
+
+For Solana quotes, you need to configure the Jupiter quote source:
+
+```typescript
+const sdk = buildSDK({
+  // ... other config
+  quotes: {
+    sourceConfig: {
+      jupiter: {
+        apiKey: process.env.JUPITER_API_KEY,
+      },
+    },
+  },
+});
+
+// Or configure per-request:
+const quotes = await sdk.quoteService.getAllQuotesWithTxs({
+  request: {
+    chainId: SolanaChains.SOLANA.chainId,
+    sellToken: SolanaAddresses.NATIVE_SOL,
+    buyToken: "TokenMintAddress...",
+    order: { type: "sell", sellAmount: BigInt(1_000_000_000) },
+    slippagePercentage: 0.5,
+    takerAddress: "YourSolanaPublicKey...",
+  },
+  config: {
+    sourceConfig: {
+      jupiter: {
+        apiKey: process.env.JUPITER_API_KEY,
+        slippageBps: 50, // 0.5% slippage
+        onlyDirectRoutes: true, // Only direct swaps, no multi-hop
+        maxAccounts: 32, // Limit transaction complexity
+      },
+    },
+  },
+});
+```
+
+#### Environment Variables
+
+```bash
+# Required for Solana quotes
+JUPITER_API_KEY=your-jupiter-api-key
+
+# Optional: RPC endpoints
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
 ### Multi-chain Support
