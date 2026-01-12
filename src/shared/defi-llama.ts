@@ -39,17 +39,19 @@ const CHAIN_ID_TO_KEY: Record<ChainId, Lowercase<string>> = {
   [Chains.SONIC.chainId]: 'sonic',
   [Chains.PLASMA.chainId]: 'plasma',
   [Chains.UNICHAIN.chainId]: 'unichain',
+  // Solana
+  solana: 'solana',
 };
 
 const KEY_TO_CHAIN_ID: Record<string, ChainId> = Object.fromEntries(
-  Object.entries(CHAIN_ID_TO_KEY).map(([chainId, key]) => [key, parseInt(chainId)])
+  Object.entries(CHAIN_ID_TO_KEY).map(([chainId, key]) => [key, isNaN(Number(chainId)) ? chainId : parseInt(chainId)])
 );
 
 export class DefiLlamaClient {
   constructor(private readonly fetch: IFetchService) {}
 
   supportedChains(): ChainId[] {
-    return Object.keys(CHAIN_ID_TO_KEY).map(Number);
+    return Object.keys(CHAIN_ID_TO_KEY).map((key) => (isNaN(Number(key)) ? key : Number(key)));
   }
 
   getCurrentTokenData({
