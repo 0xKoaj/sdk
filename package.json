@@ -1,28 +1,7 @@
 {
-  "name": "@nchamo/sdk",
-  "version": "0.0.18",
-  "contributors": [
-    {
-      "name": "Nicolas Chamo",
-      "email": "nicolas@chamo.com.ar",
-      "url": "https://github.com/nchamo"
-    },
-    {
-      "name": "fiboape",
-      "email": "fiboape@balmy.xyz",
-      "url": "https://github.com/fiboape"
-    },
-    {
-      "name": "0xged",
-      "email": "ged@balmy.xyz",
-      "url": "https://github.com/0xged"
-    },
-    {
-      "name": "Sam Bugs",
-      "email": "sam@balmy.xyz",
-      "url": "https://github.com/0xsambugs"
-    }
-  ],
+  "name": "@0xkoaj/sdk",
+  "version": "0.0.1-beta.1",
+  "contributors": [],
   "main": "./dist/index.js",
   "files": [
     "dist/**"

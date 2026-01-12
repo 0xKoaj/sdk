@@ -23,8 +23,10 @@ export class ProviderService implements IProviderService {
 
   getViemPublicClient({ chainId }: { chainId: ChainId }): PublicClient {
     if (!this.viemPublicClients.has(chainId)) {
-      const transport = this.getViemTransport({ chainId });
-      const chain = getViemChain(chainId);
+      // Viem only works with EVM chains (numeric chainIds)
+      const evmChainId = chainId as number;
+      const transport = this.getViemTransport({ chainId: evmChainId });
+      const chain = getViemChain(evmChainId);
       const client = createPublicClient({ ...this.config, chain, transport });
       this.viemPublicClients.set(chainId, client as PublicClient);
     }

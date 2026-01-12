@@ -3,12 +3,14 @@ import { StringValue } from 'ms';
 
 export type Address = string;
 export type TokenAddress = Address;
-export type ChainId = number;
+export type ChainId = number | string; // number for EVM, string for non-EVM (e.g., 'solana')
 export type TimeString = StringValue;
 export type Timestamp = number;
 export type BigIntish = string | number | bigint;
-export type Chain = Readonly<{
-  chainId: ChainId;
+
+// EVM Chain (original type)
+export type EVMChain = Readonly<{
+  chainId: number;
   name: string;
   ids: ArrayOneOrMoreReadonly<string>;
   nativeCurrency: { symbol: string; name: string };
@@ -17,6 +19,30 @@ export type Chain = Readonly<{
   explorer: string;
   testnet?: boolean;
 }>;
+
+// Solana Chain
+export type SolanaChain = Readonly<{
+  chainId: 'solana';
+  name: string;
+  ids: ArrayOneOrMoreReadonly<string>;
+  nativeCurrency: { symbol: string; name: string; mint: string };
+  wToken: string; // Wrapped SOL mint address (base58)
+  publicRPCs: Readonly<string[]>;
+  explorer: string;
+  testnet?: boolean;
+}>;
+
+// Union type for all chains
+export type Chain = EVMChain | SolanaChain;
+
+// Type guards
+export function isEVMChain(chain: Chain): chain is EVMChain {
+  return typeof chain.chainId === 'number';
+}
+
+export function isSolanaChain(chain: Chain): chain is SolanaChain {
+  return chain.chainId === 'solana';
+}
 export type InputTransaction = {
   from: Address;
   to: Address;

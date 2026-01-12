@@ -27,7 +27,9 @@ export class EtherscanGasPriceSource implements IGasPriceSource<GasValues> {
     chainId: ChainId;
     config?: { timeout?: TimeString };
   }) {
-    let url = `https://api.${CHAINS[chainId]}/api?module=gastracker&action=gasoracle`;
+    // This source only supports EVM chains (numeric chainIds)
+    const evmChainId = chainId as number;
+    let url = `https://api.${CHAINS[evmChainId]}/api?module=gastracker&action=gasoracle`;
     if (this.apiKeys?.[chainId]) {
       url += `&apikey=${this.apiKeys[chainId]} `;
     }

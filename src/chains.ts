@@ -1,7 +1,11 @@
-import { ChainId, Chain } from '@types';
+import { ChainId, Chain, EVMChain, SolanaChain, isEVMChain, isSolanaChain } from '@types';
 
 export type ChainName = keyof typeof Chains;
-export const Chains = {
+export type EVMChainName = keyof typeof EVMChains;
+export type SolanaChainName = keyof typeof SolanaChains;
+
+// EVM Chains
+export const EVMChains = {
   ETHEREUM: {
     chainId: 1,
     name: 'Ethereum',
@@ -510,7 +514,7 @@ export const Chains = {
     nativeCurrency: { symbol: 'S', name: 'Sonic' },
     wToken: '0x039e2fb66102314ce7b64ce5ce3e5183bc94ad38',
     publicRPCs: ['https://sonic-rpc.publicnode.com', 'https://rpc.soniclabs.com', 'https://sonic.drpc.org'],
-    explorer: ' https://sonicscan.org/',
+    explorer: 'https://sonicscan.org/',
   },
   ZK_SYNC_ERA: {
     chainId: 324,
@@ -595,10 +599,52 @@ export const Chains = {
     explorer: 'https://goerli.basescan.org/',
     testnet: true,
   },
+} satisfies Record<string, EVMChain>;
+
+// Solana Chains
+export const SolanaChains = {
+  SOLANA: {
+    chainId: 'solana',
+    name: 'Solana',
+    ids: ['solana', 'sol'],
+    nativeCurrency: { symbol: 'SOL', name: 'Solana', mint: 'So11111111111111111111111111111111111111112' },
+    wToken: 'So11111111111111111111111111111111111111112', // Wrapped SOL
+    publicRPCs: [
+      'https://api.mainnet-beta.solana.com',
+      'https://solana-mainnet.rpc.extrnode.com',
+      'https://rpc.ankr.com/solana',
+      'https://solana.publicnode.com',
+    ],
+    explorer: 'https://solscan.io/',
+  },
+  SOLANA_DEVNET: {
+    chainId: 'solana',
+    name: 'Solana Devnet',
+    ids: ['solana-devnet'],
+    nativeCurrency: { symbol: 'SOL', name: 'Solana', mint: 'So11111111111111111111111111111111111111112' },
+    wToken: 'So11111111111111111111111111111111111111112',
+    publicRPCs: ['https://api.devnet.solana.com'],
+    explorer: 'https://solscan.io/?cluster=devnet',
+    testnet: true,
+  },
+} satisfies Record<string, SolanaChain>;
+
+// Combined chains (EVM + Solana)
+export const Chains = {
+  ...EVMChains,
+  ...SolanaChains,
 } satisfies Record<string, Chain>;
 
 export function getAllChains(): Chain[] {
   return Object.values(Chains);
+}
+
+export function getAllEVMChains(): EVMChain[] {
+  return Object.values(EVMChains);
+}
+
+export function getAllSolanaChains(): SolanaChain[] {
+  return Object.values(SolanaChains);
 }
 
 export function getChainByKey(key: string | ChainId): Chain | undefined {

@@ -12,7 +12,7 @@ export class Contract {
   }
 
   address(chain: ChainId | Chain): ContractAddress {
-    const chainId = typeof chain === 'number' ? chain : chain.chainId;
+    const chainId = typeof chain === 'number' || typeof chain === 'string' ? chain : chain.chainId;
     const address = this.overrides[chainId] ?? this.defaultAddress;
     if (!address) {
       throw new Error(`Found no address on chain with id ${chainId}`);
@@ -38,7 +38,7 @@ class ContractBuilder {
   }
 
   and({ address, onChain }: { address: Address; onChain: ChainId | Chain }) {
-    const chainId = typeof onChain === 'number' ? onChain : onChain.chainId;
+    const chainId = typeof onChain === 'number' || typeof onChain === 'string' ? onChain : onChain.chainId;
     this.overrides[chainId] = toLower(address) as ContractAddress;
     return this;
   }

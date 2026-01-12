@@ -24,6 +24,8 @@ import { BarterQuoteSource } from './quote-sources/barter-quote-source';
 import { DodoDexQuoteSource } from './quote-sources/dodo-quote-source';
 import { SwingQuoteSource } from './quote-sources/swing-quote-source';
 import { SushiswapQuoteSource } from './quote-sources/sushiswap-quote-source';
+// Solana sources
+import { JupiterQuoteSource } from './quote-sources/jupiter-quote-source';
 
 export const QUOTE_SOURCES = {
   bebop: new BebopQuoteSource(),
@@ -49,6 +51,8 @@ export const QUOTE_SOURCES = {
   dodo: new DodoDexQuoteSource(),
   swing: new SwingQuoteSource(),
   sushiswap: new SushiswapQuoteSource(),
+  // Solana sources
+  jupiter: new JupiterQuoteSource(),
 } satisfies Record<SourceId, IQuoteSource<QuoteSourceSupport, any>>;
 
 export const SOURCES_METADATA = Object.fromEntries(

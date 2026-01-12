@@ -7,7 +7,7 @@ import { SourceMetadata } from '../types';
 import { Addresses } from '@shared/constants';
 
 export function failed(metadata: SourceMetadata, chain: Chain | ChainId, sellToken: TokenAddress, buyToken: TokenAddress, error?: any): never {
-  const chainId = typeof chain === 'number' ? chain : chain.chainId;
+  const chainId = typeof chain === 'number' || typeof chain === 'string' ? chain : chain.chainId;
   throw new FailedToGenerateQuoteError(metadata.name, chainId, sellToken, buyToken, error);
 }
 

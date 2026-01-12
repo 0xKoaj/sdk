@@ -94,11 +94,32 @@ export type SourceQuoteResponse<CustomQuoteSourceData extends Record<string, any
   customData: CustomQuoteSourceData;
 };
 
-export type SourceQuoteTransaction = {
+// EVM Transaction (backwards compatible - type is optional, defaults to 'evm')
+export type EVMSourceQuoteTransaction = {
+  type?: 'evm';
   to: Address;
   calldata: string;
   value?: bigint;
 };
+
+// Solana Transaction (base64 encoded)
+export type SolanaSourceQuoteTransaction = {
+  type: 'solana';
+  swapTransaction: string; // Base64 encoded transaction
+  lastValidBlockHeight?: number;
+};
+
+// Union type for all transaction types
+export type SourceQuoteTransaction = EVMSourceQuoteTransaction | SolanaSourceQuoteTransaction;
+
+// Type guards
+export function isEVMTransaction(tx: SourceQuoteTransaction): tx is EVMSourceQuoteTransaction {
+  return !tx.type || tx.type === 'evm';
+}
+
+export function isSolanaTransaction(tx: SourceQuoteTransaction): tx is SolanaSourceQuoteTransaction {
+  return tx.type === 'solana';
+}
 
 export type SourceQuoteRequest<
   Support extends QuoteSourceSupport,

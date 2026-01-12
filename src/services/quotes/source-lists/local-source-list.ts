@@ -76,7 +76,22 @@ export class LocalSourceList implements IQuoteSourceList {
       request: sourceRequest,
     });
 
-    const { to, calldata, value } = await tx;
+    const resolvedTx = await tx;
+    // Handle both EVM and Solana transactions
+    if ('swapTransaction' in resolvedTx && resolvedTx.type === 'solana') {
+      // For Solana transactions, return a special format
+      // The consumer should check for the presence of 'swapTransaction' to handle Solana txs
+      return {
+        to: '',
+        data: resolvedTx.swapTransaction,
+        from: quote.accounts.takerAddress,
+        // Include Solana-specific fields
+        ...(resolvedTx.lastValidBlockHeight !== undefined && { lastValidBlockHeight: resolvedTx.lastValidBlockHeight }),
+        isSolanaTransaction: true,
+      } as any;
+    }
+    // EVM transaction (default)
+    const { to, calldata, value } = resolvedTx as { to: string; calldata: string; value?: bigint };
     return { to, data: calldata, value, from: quote.accounts.takerAddress };
   }
 

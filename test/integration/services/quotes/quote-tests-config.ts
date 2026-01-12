@@ -52,6 +52,10 @@ if (process.env.OKX_DEX_API_KEY && process.env.OKX_DEX_SECRET_KEY && process.env
 if (process.env.FLY_API_KEY) {
   CONFIG.custom!['fly-trade'] = { apiKey: process.env.FLY_API_KEY };
 }
+// Solana sources
+if (process.env.JUPITER_API_KEY) {
+  CONFIG.custom!.jupiter = { apiKey: process.env.JUPITER_API_KEY };
+}
 
 export enum Test {
   SELL_RANDOM_ERC20_TO_STABLE,

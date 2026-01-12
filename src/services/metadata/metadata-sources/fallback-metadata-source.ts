@@ -146,7 +146,8 @@ function checkStatus<Sources extends IMetadataSource<object>[] | []>(requestTrac
 
 function getAddressesForSource<TokenMetadata extends object>(source: IMetadataSource<TokenMetadata>, tokens: MetadataInput[]): MetadataInput[] {
   const chainsForSource = new Set(Object.keys(source.supportedProperties()).map(Number));
-  return tokens.filter(({ chainId }) => chainsForSource.has(chainId));
+  // Filter tokens that match supported chains (for EVM chains which are numeric)
+  return tokens.filter(({ chainId }) => typeof chainId === 'number' && chainsForSource.has(chainId));
 }
 
 function doesSourceSupportAtLeastOneChain(source: IMetadataSource<object>, chainIds: ChainId[]) {
