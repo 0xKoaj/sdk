@@ -1,11 +1,12 @@
 import { ChainId, TimeString, TokenAddress, Timestamp } from '@types';
 import { Addresses } from '@shared/constants';
-import { Chains, getChainByKey } from '@chains';
+import { Chains, SolanaChains, getChainByKey } from '@chains';
 import { IFetchService } from '@services/fetch/types';
 import { isSameAddress, splitInChunks, timeToSeconds } from '@shared/utils';
 import { PriceResult } from '@services/prices';
 
 const CHAIN_ID_TO_KEY: Record<ChainId, Lowercase<string>> = {
+  // EVM Chains
   [Chains.ETHEREUM.chainId]: 'ethereum',
   [Chains.BNB_CHAIN.chainId]: 'bsc',
   [Chains.POLYGON.chainId]: 'polygon',
@@ -39,10 +40,12 @@ const CHAIN_ID_TO_KEY: Record<ChainId, Lowercase<string>> = {
   [Chains.SONIC.chainId]: 'sonic',
   [Chains.PLASMA.chainId]: 'plasma',
   [Chains.UNICHAIN.chainId]: 'unichain',
+  // Solana Chains
+  [SolanaChains.SOLANA.chainId]: 'solana',
 };
 
 const KEY_TO_CHAIN_ID: Record<string, ChainId> = Object.fromEntries(
-  Object.entries(CHAIN_ID_TO_KEY).map(([chainId, key]) => [key, parseInt(chainId)])
+  Object.entries(CHAIN_ID_TO_KEY).map(([chainId, key]) => [key, isNaN(parseInt(chainId)) ? chainId : parseInt(chainId)])
 );
 
 export class DefiLlamaClient {
