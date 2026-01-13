@@ -28,7 +28,7 @@ describe('Quote Service', () => {
     });
   });
   when('request works but gas request fails', () => {
-    then('it is returned as a failed quote', async () => {
+    then('response is returned correctly without gas info', async () => {
       const sourceList = new QuoteService({
         sourceList: SOURCE_LIST,
         gasService: FAILING_GAS_SERVICE,
@@ -38,7 +38,9 @@ describe('Quote Service', () => {
       });
       const quotes = sourceList.getQuotes(REQUEST);
       expect(Object.keys(quotes)).to.have.lengthOf(1);
-      await expect(quotes.source).to.have.rejectedWith('Failed to fetch gas data');
+      const quote = await quotes.source;
+      expect(quote).to.not.have.any.keys('error');
+      expect(quote.gas).to.be.undefined;
     });
   });
   when('request works but metadata request fails', () => {

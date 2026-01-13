@@ -249,11 +249,10 @@ export class QuoteService implements IQuoteService {
       promises.gasCalculator,
     ]);
     if (!tokens) throw new Error(`Failed to fetch the quote's tokens`);
-    if (!gasCalculator) throw new Error(`Failed to fetch gas data`);
     const sellToken = { ...tokens[request.sellToken], price: prices?.[request.sellToken]?.price };
     const buyToken = { ...tokens[request.buyToken], price: prices?.[request.buyToken]?.price };
     let gas: QuoteResponse['gas'];
-    if (response.estimatedGas) {
+    if (response.estimatedGas && gasCalculator) {
       // Note: some sources provide a tx as part of the custom data, so we'll pass it just in case
       const gasCost = gasCalculator.calculateGasCost({ gasEstimation: response.estimatedGas, tx: response.customData.tx });
       const { gasCostNativeToken } = gasCost[request.gasSpeed?.speed ?? 'standard'] ?? gasCost['standard'];
