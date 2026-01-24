@@ -59,7 +59,7 @@ const NORDSTERN_METADATA: QuoteSourceMetadata<NordsternSupport> = {
     swapAndTransfer: false,
     buyOrders: false,
   },
-  logoURI: 'ipfs://bafkreigxqxccuhlipozzz2h66xftkfl2dvkyfq53bszw3lfg34weuoa3dq', // TODO: Update with actual Nordstern logo
+  logoURI: 'ipfs://bafkreieji7rffewb2po2gmsa6x6b4z4hcoopv32tsbsqbmf5zxpztkjyou', // TODO: Update with actual Nordstern logo
 };
 
 type NordsternSupport = { buyOrders: false; swapAndTransfer: false };
