@@ -23,7 +23,7 @@ const SUPPORTED_CHAINS = [
   Chains.SCROLL,
   Chains.BLAST,
   Chains.POLYGON_ZKEVM,
-  Chains.FANTOM,
+  Chains.CRONOS,
   Chains.MANTLE,
   Chains.METIS_ANDROMEDA,
   Chains.ZK_SYNC_ERA,
@@ -114,7 +114,7 @@ async function calculateApprovalTarget({
     approveAmount: Uint.MAX_256,
   };
   const queryString = qs.stringify(queryParams, { skipNulls: true, arrayFormat: 'comma' });
-  const path = `/api/v5/dex/aggregator/approve-transaction?${queryString}`;
+  const path = `/api/v6/dex/aggregator/approve-transaction?${queryString}`;
   return fetch({
     sellToken,
     buyToken,
@@ -148,7 +148,7 @@ async function calculateQuote({
     swapReceiverAddress: recipient,
   };
   const queryString = qs.stringify(queryParams, { skipNulls: true, arrayFormat: 'comma' });
-  const path = `/api/v5/dex/aggregator/swap?${queryString}`;
+  const path = `/api/v6/dex/aggregator/swap?${queryString}`;
   return fetch({
     sellToken,
     buyToken,
