@@ -4,6 +4,12 @@ import { IMetadataSource, MergeMetadata, MetadataInput, MetadataResult } from '.
 import { calculateFieldRequirementsPerChain, combineSourcesSupport, makeRequirementsCompatible } from '@shared/requirements-and-support';
 import { groupByChain } from '@shared/utils';
 
+// Helper to parse chainId - handles both numeric and string chainIds (like 'solana')
+function parseChainId(chainIdString: string): ChainId {
+  const parsed = parseInt(chainIdString);
+  return isNaN(parsed) ? chainIdString : parsed;
+}
+
 // This fallback source will use different sources and combine the results of each of them
 export class FallbackMetadataSource<Sources extends IMetadataSource<object>[] | []> implements IMetadataSource<MergeMetadata<Sources>> {
   constructor(private readonly sources: Sources) {
@@ -58,7 +64,7 @@ export class FallbackMetadataSource<Sources extends IMetadataSource<object>[] | 
             reducedTimeout
           );
           for (const [chainIdString, metadataRecord] of Object.entries(sourceResult)) {
-            const chainId = Number(chainIdString);
+            const chainId = parseChainId(chainIdString);
             const metadatas = Object.entries(metadataRecord);
             if (!(chainId in result) && metadatas.length > 0) result[chainId] = {};
 
@@ -96,7 +102,7 @@ function buildRequestTracker<Sources extends IMetadataSource<object>[] | []>(
   const groupedByChain = groupByChain(tokens, ({ token }) => token);
   const requestTracker: RequestTracker<Sources> = {};
   for (const [chainIdString, addressesInChain] of Object.entries(groupedByChain)) {
-    const chainId = Number(chainIdString);
+    const chainId = parseChainId(chainIdString);
     requestTracker[chainId] = Object.fromEntries(
       Object.entries(fieldRequirements[chainId]).map(([property, requirement]) => [
         property,
@@ -121,10 +127,11 @@ function updateCounterWhenSourceFulfilled<Sources extends IMetadataSource<object
   requestTracker: RequestTracker<Sources>
 ) {
   const supportedProperties = source.supportedProperties();
-  for (const [chainId, properties] of Object.entries(supportedProperties)) {
+  for (const [chainIdString, properties] of Object.entries(supportedProperties)) {
+    const chainId = parseChainId(chainIdString);
     if (chainId in requestTracker) {
       for (const property in properties) {
-        requestTracker[Number(chainId)][property as keyof MergeMetadata<Sources>].sources -= 1;
+        requestTracker[chainId][property as keyof MergeMetadata<Sources>].sources -= 1;
       }
     }
   }
@@ -145,15 +152,14 @@ function checkStatus<Sources extends IMetadataSource<object>[] | []>(requestTrac
 }
 
 function getAddressesForSource<TokenMetadata extends object>(source: IMetadataSource<TokenMetadata>, tokens: MetadataInput[]): MetadataInput[] {
-  const chainsForSource = new Set(Object.keys(source.supportedProperties()).map(Number));
-  // Filter tokens that match supported chains (for EVM chains which are numeric)
-  return tokens.filter(({ chainId }) => typeof chainId === 'number' && chainsForSource.has(chainId));
+  const supportedChains = Object.keys(source.supportedProperties()).map(parseChainId);
+  const chainsForSource = new Set(supportedChains.map(String)); // Convert to strings for consistent comparison
+  return tokens.filter(({ chainId }) => chainsForSource.has(String(chainId)));
 }
 
 function doesSourceSupportAtLeastOneChain(source: IMetadataSource<object>, chainIds: ChainId[]) {
-  return Object.keys(source.supportedProperties())
-    .map(Number)
-    .some((chainId) => chainIds.includes(chainId));
+  const supportedChains = Object.keys(source.supportedProperties()).map(parseChainId);
+  return supportedChains.some((chainId) => chainIds.includes(chainId));
 }
 
 type PropertyRecord<Sources extends IMetadataSource<object>[] | [], T> = Record<ChainId, Record<keyof MergeMetadata<Sources>, T>>;

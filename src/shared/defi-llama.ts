@@ -52,7 +52,7 @@ export class DefiLlamaClient {
   constructor(private readonly fetch: IFetchService) {}
 
   supportedChains(): ChainId[] {
-    return Object.keys(CHAIN_ID_TO_KEY).map(Number);
+    return Object.keys(CHAIN_ID_TO_KEY).map((chainId) => (isNaN(parseInt(chainId)) ? chainId : parseInt(chainId)));
   }
 
   getCurrentTokenData({

@@ -36,11 +36,17 @@ export function calculateFieldRequirements<Values extends object, Requirements e
   return result;
 }
 
+// Helper to parse chainId - handles both numeric and string chainIds (like 'solana')
+function parseChainId(chainIdString: string): ChainId {
+  const parsed = parseInt(chainIdString);
+  return isNaN(parsed) ? chainIdString : parsed;
+}
+
 export function combineSourcesSupport<Source, Values extends object>(
   sources: Source[],
   extractSupport: (source: Source) => Record<ChainId, SupportInChain<object>>
 ): Record<ChainId, SupportInChain<Values>> {
-  const allChains = chainsUnion(sources.map((source) => Object.keys(extractSupport(source)).map(Number)));
+  const allChains = chainsUnion(sources.map((source) => Object.keys(extractSupport(source)).map(parseChainId)));
   const result: Record<ChainId, SupportInChain<Values>> = {};
   for (const chainId of allChains) {
     const supports: SupportInChain<object>[] = sources.map((source) => extractSupport(source)[chainId]).filter((support) => !!support);

@@ -27,6 +27,7 @@ const SUPPORTED_CHAINS: Record<ChainId, string> = {
   [Chains.MANTLE.chainId]: 'mantle',
   [Chains.SONIC.chainId]: 'sonic',
   [Chains.ZK_SYNC_ERA.chainId]: 'zksync',
+  [Chains.PLASMA.chainId]: 'plasma',
 };
 
 const KYBERSWAP_METADATA: QuoteSourceMetadata<KyberswapSupport> = {

@@ -30,6 +30,7 @@ const SUSHISWAP_METADATA: QuoteSourceMetadata<SushiswapSupport> = {
       Chains.LINEA.chainId,
       Chains.BLAST.chainId,
       Chains.SCROLL.chainId,
+      Chains.PLASMA.chainId,
     ],
     swapAndTransfer: true,
     buyOrders: false,
