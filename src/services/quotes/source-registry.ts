@@ -25,6 +25,7 @@ import { DodoDexQuoteSource } from './quote-sources/dodo-quote-source';
 import { SwingQuoteSource } from './quote-sources/swing-quote-source';
 import { SushiswapQuoteSource } from './quote-sources/sushiswap-quote-source';
 import { NordsternQuoteSource } from './quote-sources/nordstern-quote-source';
+import { RelayQuoteSource } from './quote-sources/relay-quote-source';
 // Solana sources
 import { JupiterQuoteSource } from './quote-sources/jupiter-quote-source';
 
@@ -53,6 +54,7 @@ export const QUOTE_SOURCES = {
   swing: new SwingQuoteSource(),
   sushiswap: new SushiswapQuoteSource(),
   nordstern: new NordsternQuoteSource(),
+  relay: new RelayQuoteSource(),
   // Solana sources
   jupiter: new JupiterQuoteSource(),
 } satisfies Record<SourceId, IQuoteSource<QuoteSourceSupport, any>>;
