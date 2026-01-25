@@ -93,20 +93,17 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     // Extract quote details from response
     const { steps, details, fees } = data;
 
-    // Find the transaction step
-    const txStep = steps?.find((step: any) => step.kind === 'transaction');
-    if (!txStep?.items?.[0]?.data) {
-      failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No transaction data in response');
+    // Find the swap transaction step (not approve)
+    const swapStep = steps?.find((step: any) => step.id === 'swap');
+    if (!swapStep?.items?.[0]?.data) {
+      failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No swap transaction data in response');
     }
 
-    const txData = txStep.items[0].data;
+    const txData = swapStep.items[0].data;
     const buyAmount = BigInt(details?.currencyOut?.amount ?? '0');
+    const minBuyAmount = BigInt(details?.currencyOut?.minimumAmount ?? '0');
 
-    // Calculate min buy amount with slippage
-    const slippageMultiplier = 10000n - BigInt(Math.round(slippagePercentage * 100));
-    const minBuyAmount = (buyAmount * slippageMultiplier) / 10000n;
-
-    // Determine allowance target - for native token no approval needed
+    // Determine allowance target - use swap contract address, or zero for native token
     const allowanceTarget = isSameAddress(sellToken, Addresses.NATIVE_TOKEN) ? Addresses.ZERO_ADDRESS : (txData.to as Address);
 
     // Estimate gas from fees if available
@@ -130,7 +127,7 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     };
   }
 
-  async buildTx({ request }: BuildTxParams<RelayConfig, RelayData>): Promise<SourceQuoteTransaction> {
+  async buildTx({ request, config }: BuildTxParams<RelayConfig, RelayData>): Promise<SourceQuoteTransaction> {
     return request.customData.tx;
   }
 
