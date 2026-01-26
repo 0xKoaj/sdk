@@ -5,7 +5,7 @@ import { isSameAddress, timeToSeconds } from '@shared/utils';
 import { QuoteParams, QuoteSourceMetadata, SourceQuoteResponse, SourceQuoteTransaction, BuildTxParams } from './types';
 import { addQuoteSlippage, calculateAllowanceTarget, failed } from './utils';
 import { AlwaysValidConfigAndContextSource } from './base/always-valid-source';
-import { encodeFunctionData, parseAbi, decodeFunctionResult, type Address as ViemAddress } from 'viem';
+import { encodeFunctionData, decodeFunctionResult, type Address as ViemAddress } from 'viem';
 
 // Aerodrome V2 Router on Base
 const AERODROME_ROUTER: ViemAddress = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
@@ -217,13 +217,90 @@ export class AerodromeQuoteSource extends AlwaysValidConfigAndContextSource<Aero
   }
 }
 
-// Aerodrome Router ABI (relevant functions only)
-const ROUTER_HUMAN_READABLE_ABI = [
-  // Route struct: (address from, address to, bool stable, address factory)
-  'function getAmountsOut(uint256 amountIn, tuple(address from, address to, bool stable, address factory)[] routes) view returns (uint256[] amounts)',
-  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, tuple(address from, address to, bool stable, address factory)[] routes, address to, uint256 deadline) returns (uint256[] amounts)',
-  'function swapExactETHForTokens(uint256 amountOutMin, tuple(address from, address to, bool stable, address factory)[] routes, address to, uint256 deadline) payable returns (uint256[] amounts)',
-  'function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, tuple(address from, address to, bool stable, address factory)[] routes, address to, uint256 deadline) returns (uint256[] amounts)',
-];
-
-const ROUTER_ABI = parseAbi(ROUTER_HUMAN_READABLE_ABI);
+// Aerodrome Router ABI (JSON format - required for tuple types with named parameters)
+const ROUTER_ABI = [
+  {
+    inputs: [
+      { name: 'amountIn', type: 'uint256' },
+      {
+        name: 'routes',
+        type: 'tuple[]',
+        components: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'stable', type: 'bool' },
+          { name: 'factory', type: 'address' },
+        ],
+      },
+    ],
+    name: 'getAmountsOut',
+    outputs: [{ name: 'amounts', type: 'uint256[]' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'amountIn', type: 'uint256' },
+      { name: 'amountOutMin', type: 'uint256' },
+      {
+        name: 'routes',
+        type: 'tuple[]',
+        components: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'stable', type: 'bool' },
+          { name: 'factory', type: 'address' },
+        ],
+      },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'swapExactTokensForTokens',
+    outputs: [{ name: 'amounts', type: 'uint256[]' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'amountOutMin', type: 'uint256' },
+      {
+        name: 'routes',
+        type: 'tuple[]',
+        components: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'stable', type: 'bool' },
+          { name: 'factory', type: 'address' },
+        ],
+      },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'swapExactETHForTokens',
+    outputs: [{ name: 'amounts', type: 'uint256[]' }],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'amountIn', type: 'uint256' },
+      { name: 'amountOutMin', type: 'uint256' },
+      {
+        name: 'routes',
+        type: 'tuple[]',
+        components: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'stable', type: 'bool' },
+          { name: 'factory', type: 'address' },
+        ],
+      },
+      { name: 'to', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    name: 'swapExactTokensForETH',
+    outputs: [{ name: 'amounts', type: 'uint256[]' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
