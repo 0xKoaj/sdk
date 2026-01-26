@@ -27,6 +27,7 @@ import { SushiswapQuoteSource } from './quote-sources/sushiswap-quote-source';
 import { NordsternQuoteSource } from './quote-sources/nordstern-quote-source';
 import { RelayQuoteSource } from './quote-sources/relay-quote-source';
 import { AerodromeQuoteSource } from './quote-sources/aerodrome-quote-source';
+import { CowSwapQuoteSource } from './quote-sources/cow-swap-quote-source';
 // Solana sources
 import { JupiterQuoteSource } from './quote-sources/jupiter-quote-source';
 
@@ -57,6 +58,7 @@ export const QUOTE_SOURCES = {
   nordstern: new NordsternQuoteSource(),
   relay: new RelayQuoteSource(),
   aerodrome: new AerodromeQuoteSource(),
+  'cow-swap': new CowSwapQuoteSource(),
   // Solana sources
   jupiter: new JupiterQuoteSource(),
 } satisfies Record<SourceId, IQuoteSource<QuoteSourceSupport, any>>;

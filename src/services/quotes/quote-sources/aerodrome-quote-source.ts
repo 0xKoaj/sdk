@@ -21,7 +21,7 @@ const AERODROME_METADATA: QuoteSourceMetadata<AerodromeSupport> = {
     swapAndTransfer: true,
     buyOrders: false, // Aerodrome router doesn't support exact output swaps
   },
-  logoURI: 'ipfs://QmYxngew4pLRn7Gf4FNEj87xPUbqFZ5r93Mzv6T2VbUC1X', // Aerodrome logo
+  logoURI: 'ipfs://bafybeiagbaf3a6j6ikcidr5fctbku6q6xtsdxneql22nfushis55tvkm5i', // Aerodrome logo
 };
 
 type AerodromeSupport = { buyOrders: false; swapAndTransfer: true };
