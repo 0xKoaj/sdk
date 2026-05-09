@@ -23,7 +23,7 @@ const ROUTER_ADDRESS: Record<ChainId, string> = {
 const UNISWAP_METADATA: QuoteSourceMetadata<UniswapSupport> = {
   name: 'Uniswap',
   supports: {
-    chains: Object.keys(ROUTER_ADDRESS).map(Number),
+    chains: [...new Set([...Object.keys(ROUTER_ADDRESS).map(Number), Chains.UNICHAIN.chainId])],
     swapAndTransfer: true,
     buyOrders: true,
   },
@@ -60,14 +60,14 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
     recipient = recipient ?? takeFrom;
     const url =
       'https://api.uniswap.org/v1/quote' +
-      '?protocols=v2,v3,mixed' +
+      '?protocols=v2,v3,v4,mixed' +
       `&tokenInAddress=${mapToWTokenIfNecessary(chainId, sellToken)}` +
       `&tokenInChainId=${chainId}` +
       `&tokenOutAddress=${mapToWTokenIfNecessary(chainId, buyToken)}` +
       `&tokenOutChainId=${chainId}` +
       `&amount=${amount.toString()}` +
       `&type=${order.type === 'sell' ? 'exactIn' : 'exactOut'}` +
-      `&recipient=${isBuyTokenNativeToken ? router : recipient}` +
+      `&recipient=${isBuyTokenNativeToken ? (router ?? recipient) : recipient}` +
       `&deadline=${timeToSeconds(txValidFor ?? '3h')}` +
       `&slippageTolerance=${slippagePercentage}`;
 
@@ -82,15 +82,23 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
     }
     let {
       quote: quoteAmount,
-      methodParameters: { calldata },
+      methodParameters: { calldata, to: routerOverride },
       gasUseEstimate,
     } = await response.json();
     const sellAmount = order.type === 'sell' ? order.sellAmount : BigInt(quoteAmount);
     const buyAmount = order.type === 'sell' ? BigInt(quoteAmount) : order.buyAmount;
     const value = isSellTokenNativeToken ? sellAmount : undefined;
 
-    if (isBuyTokenNativeToken) {
-      // Use multicall to unwrap wToken
+    // Use router address from API response (supports v4 Universal Router) with legacy fallback
+    const effectiveRouter = (routerOverride as string | undefined) ?? router;
+    if (!effectiveRouter) {
+      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, 'No router address available for this chain');
+    }
+
+    // SwapRouter02 (legacy v3) does not auto-unwrap WETH — wrap calldata manually.
+    // Universal Router (v4) handles native ETH output internally via its sweep commands.
+    const usesLegacyRouter = effectiveRouter === router;
+    if (isBuyTokenNativeToken && usesLegacyRouter) {
       const minBuyAmount = calculateMinBuyAmount(order.type, buyAmount, slippagePercentage);
       const unwrapData = encodeFunctionData({
         abi: ROUTER_ABI,
@@ -103,7 +111,6 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
         args: [[calldata, unwrapData]],
       });
 
-      // Update calldata and gas estimate
       calldata = multicallData!;
       gasUseEstimate = BigInt(gasUseEstimate) + 12_500n;
     }
@@ -112,10 +119,10 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
       sellAmount,
       buyAmount,
       estimatedGas: BigInt(gasUseEstimate),
-      allowanceTarget: calculateAllowanceTarget(sellToken, router),
+      allowanceTarget: calculateAllowanceTarget(sellToken, effectiveRouter),
       customData: {
         tx: {
-          to: router,
+          to: effectiveRouter,
           calldata,
           value,
         },

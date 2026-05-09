@@ -549,6 +549,32 @@ export const EVMChains = {
     ],
     explorer: 'https://uniscan.xyz/',
   },
+  INK: {
+    chainId: 57073,
+    name: 'Ink',
+    ids: ['ink'],
+    nativeCurrency: { symbol: 'ETH', name: 'Ethereum' },
+    wToken: '0x4200000000000000000000000000000000000006',
+    publicRPCs: [
+      'https://rpc-gel.inkonchain.com',
+      'https://rpc-qnd.inkonchain.com',
+      'https://ink.drpc.org',
+    ],
+    explorer: 'https://explorer.inkonchain.com/',
+  },
+  BERACHAIN: {
+    chainId: 80094,
+    name: 'Berachain',
+    ids: ['berachain', 'bera'],
+    nativeCurrency: { symbol: 'BERA', name: 'Berachain' },
+    wToken: '0x5806E416dA447b267cEA759358cF22Cc19b4a74',
+    publicRPCs: [
+      'https://rpc.berachain.com',
+      'https://berachain-rpc.publicnode.com',
+      'https://1rpc.io/bera',
+    ],
+    explorer: 'https://berascan.com/',
+  },
   ETHEREUM_GOERLI: {
     chainId: 5,
     name: 'Ethereum Goerli',
