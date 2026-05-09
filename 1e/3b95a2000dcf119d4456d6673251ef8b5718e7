@@ -1,0 +1,23 @@
+src/chains.ts
+  s_81624ce4d9fd7d::t_c9f4a339a9892e 552-577
+src/services/quotes/quote-sources/uniswap-quote-source.ts
+  s_81624ce4d9fd7d::t_732b344a78cfb6 26
+  s_81624ce4d9fd7d::t_620fff36de2c5b 63,70
+  s_81624ce4d9fd7d::t_0c74b5ba66b3bb 85,92-101,122,125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "1e3b95a2000dcf119d4456d6673251ef8b5718e7",
+  "prompts": {},
+  "sessions": {
+    "s_81624ce4d9fd7d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b0cc8f91-fe67-4f80-931e-12af675cee41",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
