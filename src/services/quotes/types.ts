@@ -89,6 +89,7 @@ export type IQuoteService = {
 
 export type QuoteRequest = {
   chainId: ChainId;
+  buyTokenChainId?: ChainId;
   sellToken: TokenAddress;
   buyToken: TokenAddress;
   order: { type: 'sell'; sellAmount: BigIntish } | { type: 'buy'; buyAmount: BigIntish };
@@ -106,6 +107,7 @@ export type QuoteRequest = {
 type TokenWithOptionalPrice = BaseTokenMetadata & { address: TokenAddress; price?: number };
 export type QuoteResponse<CustomQuoteSourceData extends Record<string, any> = Record<string, any>> = {
   chainId: ChainId;
+  buyTokenChainId: ChainId;
   sellToken: TokenWithOptionalPrice;
   buyToken: TokenWithOptionalPrice;
   sellAmount: AmountsOfToken;
@@ -128,6 +130,7 @@ export type QuoteResponse<CustomQuoteSourceData extends Record<string, any> = Re
 
 export type QuoteResponseRelevantForTxBuild<CustomQuoteSourceData extends Record<string, any> = Record<string, any>> = {
   chainId: ChainId;
+  buyTokenChainId: ChainId;
   sellToken: { address: Address };
   buyToken: { address: Address };
   sellAmount: { amount: bigint };

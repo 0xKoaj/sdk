@@ -21,16 +21,26 @@ export class SourceInvalidConfigOrContextError extends Error {
 }
 
 export class FailedToGenerateQuoteError extends Error {
-  constructor(sourceName: string, chainId: ChainId, sellToken: TokenAddress, buyToken: TokenAddress, error?: any) {
+  constructor(sourceName: string, chainId: ChainId, sellToken: TokenAddress, buyToken: TokenAddress, error?: any, buyTokenChainId?: ChainId) {
     const context = error ? ` with error ${JSON.stringify(error)}` : '';
-    const chain = getChainByKey(chainId)?.name ?? `chain with id ${chainId}`;
-    super(`${sourceName}: failed to calculate a quote between ${sellToken} and ${buyToken} on ${chain}${context}`);
+    const sellChain = getChainByKey(chainId)?.name ?? `chain with id ${chainId}`;
+    const resolvedBuyChainId = buyTokenChainId ?? chainId;
+    const chainDescription =
+      resolvedBuyChainId !== chainId
+        ? `from ${sellChain} to ${getChainByKey(resolvedBuyChainId)?.name ?? `chain with id ${resolvedBuyChainId}`}`
+        : `on ${sellChain}`;
+    super(`${sourceName}: failed to calculate a quote between ${sellToken} and ${buyToken} ${chainDescription}${context}`);
   }
 }
 
 export class FailedToGenerateAnyQuotesError extends Error {
-  constructor(chainId: ChainId, sellToken: TokenAddress, buyToken: TokenAddress) {
-    const chain = getChainByKey(chainId)?.name ?? `chain with id ${chainId}`;
-    super(`Failed to calculate a quote between ${sellToken} and ${buyToken} on ${chain}`);
+  constructor(chainId: ChainId, sellToken: TokenAddress, buyToken: TokenAddress, buyTokenChainId?: ChainId) {
+    const sellChain = getChainByKey(chainId)?.name ?? `chain with id ${chainId}`;
+    const resolvedBuyChainId = buyTokenChainId ?? chainId;
+    const chainDescription =
+      resolvedBuyChainId !== chainId
+        ? `from ${sellChain} to ${getChainByKey(resolvedBuyChainId)?.name ?? `chain with id ${resolvedBuyChainId}`}`
+        : `on ${sellChain}`;
+    super(`Failed to calculate a quote between ${sellToken} and ${buyToken} ${chainDescription}`);
   }
 }

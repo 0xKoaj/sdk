@@ -28,6 +28,7 @@ export type BuildTxParams<
 
 export type SourceQuoteBuildTxRequest<CustomQuoteSourceData extends Record<string, any> = Record<string, any>> = {
   chainId: ChainId;
+  buyTokenChainId: ChainId;
   sellToken: TokenAddress;
   buyToken: TokenAddress;
   type: 'sell' | 'buy';
@@ -65,6 +66,7 @@ type BaseOrder = SellOrder | BuyOrder;
 type BaseSwapAccounts = { takeFrom: Address };
 type BaseSwapQuoteRequest<Order extends BaseOrder, Accounts extends BaseSwapAccounts> = {
   chainId: ChainId;
+  buyTokenChainId: ChainId;
   sellToken: TokenAddress;
   buyToken: TokenAddress;
   order: Order;

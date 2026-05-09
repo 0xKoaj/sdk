@@ -153,7 +153,7 @@ export class QuoteService implements IQuoteService {
       },
     });
     if (allQuotes.length === 0) {
-      throw new FailedToGenerateAnyQuotesError(request.chainId, request.sellToken, request.buyToken);
+      throw new FailedToGenerateAnyQuotesError(request.chainId, request.sellToken, request.buyToken, request.buyTokenChainId);
     }
     return allQuotes[0];
   }
@@ -267,6 +267,7 @@ export class QuoteService implements IQuoteService {
     }
     return {
       chainId: request.chainId,
+      buyTokenChainId: request.buyTokenChainId ?? request.chainId,
       sellToken: { ...sellToken, address: request.sellToken },
       buyToken: { ...buyToken, address: request.buyToken },
       sellAmount: toAmountsOfToken({ ...sellToken, amount: response.sellAmount }),
@@ -287,8 +288,15 @@ export class QuoteService implements IQuoteService {
     estimateBuyOrdersWithSellOnlySources,
     ...request
   }: QuoteRequest): SourceId[] {
-    const sourcesInChain = this.supportedSourcesInChain(request);
+    const buyTokenChainId = request.buyTokenChainId ?? request.chainId;
+    const sourcesInChain = this.supportedSourcesInChain({ chainId: request.chainId });
     let sourceIds = Object.keys(sourcesInChain);
+
+    // For cross-chain, only keep sources that also support the buy token chain
+    if (buyTokenChainId !== request.chainId) {
+      const sourcesInBuyChain = this.supportedSourcesInChain({ chainId: buyTokenChainId });
+      sourceIds = sourceIds.filter((id) => id in sourcesInBuyChain);
+    }
 
     if (filters?.includeSources) {
       sourceIds = sourceIds.filter((id) => filters!.includeSources!.includes(id));
@@ -310,23 +318,66 @@ export class QuoteService implements IQuoteService {
   private calculateExternalPromises(request: QuoteRequest, config: { timeout?: TimeString } | undefined) {
     const reducedTimeout = reduceTimeout(config?.timeout, '200');
     const selectedGasSpeed = request.gasSpeed?.speed ?? 'standard';
-    const tokens = this.metadataService
-      .getMetadataInChain({
-        chainId: request.chainId,
-        tokens: [request.sellToken, request.buyToken],
-        config: {
-          timeout: reducedTimeout,
-          fields: REQUIREMENTS,
-        },
-      })
-      .catch(() => undefined);
-    const prices = this.priceService
-      .getCurrentPricesInChain({
-        chainId: request.chainId,
-        tokens: [request.sellToken, request.buyToken, Addresses.NATIVE_TOKEN],
-        config: { timeout: reducedTimeout },
-      })
-      .catch(() => undefined);
+    const buyTokenChainId = request.buyTokenChainId ?? request.chainId;
+    const isCrossChain = buyTokenChainId !== request.chainId;
+
+    const tokens: Promise<Record<TokenAddress, BaseTokenMetadata> | undefined> = isCrossChain
+      ? Promise.all([
+          this.metadataService
+            .getMetadataInChain({
+              chainId: request.chainId,
+              tokens: [request.sellToken],
+              config: { timeout: reducedTimeout, fields: REQUIREMENTS },
+            })
+            .catch(() => undefined),
+          this.metadataService
+            .getMetadataInChain({
+              chainId: buyTokenChainId,
+              tokens: [request.buyToken],
+              config: { timeout: reducedTimeout, fields: REQUIREMENTS },
+            })
+            .catch(() => undefined),
+        ]).then(([sellMeta, buyMeta]) => {
+          if (!sellMeta && !buyMeta) return undefined;
+          return { ...sellMeta, ...buyMeta };
+        })
+      : this.metadataService
+          .getMetadataInChain({
+            chainId: request.chainId,
+            tokens: [request.sellToken, request.buyToken],
+            config: { timeout: reducedTimeout, fields: REQUIREMENTS },
+          })
+          .catch(() => undefined);
+
+    const prices: Promise<Record<TokenAddress, PriceResult> | undefined> = isCrossChain
+      ? Promise.all([
+          this.priceService
+            .getCurrentPricesInChain({
+              chainId: request.chainId,
+              tokens: [request.sellToken, Addresses.NATIVE_TOKEN],
+              config: { timeout: reducedTimeout },
+            })
+            .catch(() => undefined),
+          this.priceService
+            .getCurrentPricesInChain({
+              chainId: buyTokenChainId,
+              tokens: [request.buyToken],
+              config: { timeout: reducedTimeout },
+            })
+            .catch(() => undefined),
+        ]).then(([sellPrices, buyPrices]) => {
+          if (!sellPrices && !buyPrices) return undefined;
+          return { ...sellPrices, ...buyPrices };
+        })
+      : this.priceService
+          .getCurrentPricesInChain({
+            chainId: request.chainId,
+            tokens: [request.sellToken, request.buyToken, Addresses.NATIVE_TOKEN],
+            config: { timeout: reducedTimeout },
+          })
+          .catch(() => undefined);
+
+    // Gas is always calculated on the source chain (where the tx is executed)
     const gasCalculator = this.gasService
       .getQuickGasCalculator({
         chainId: request.chainId,

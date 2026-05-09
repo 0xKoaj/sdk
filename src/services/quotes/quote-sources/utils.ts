@@ -6,9 +6,21 @@ import { FailedToGenerateQuoteError } from '../errors';
 import { SourceMetadata } from '../types';
 import { Addresses } from '@shared/constants';
 
-export function failed(metadata: SourceMetadata, chain: Chain | ChainId, sellToken: TokenAddress, buyToken: TokenAddress, error?: any): never {
+export function failed(
+  metadata: SourceMetadata,
+  chain: Chain | ChainId,
+  sellToken: TokenAddress,
+  buyToken: TokenAddress,
+  error?: any,
+  buyTokenChain?: Chain | ChainId
+): never {
   const chainId = typeof chain === 'number' || typeof chain === 'string' ? chain : chain.chainId;
-  throw new FailedToGenerateQuoteError(metadata.name, chainId, sellToken, buyToken, error);
+  const buyTokenChainId = buyTokenChain
+    ? typeof buyTokenChain === 'number' || typeof buyTokenChain === 'string'
+      ? buyTokenChain
+      : buyTokenChain.chainId
+    : undefined;
+  throw new FailedToGenerateQuoteError(metadata.name, chainId, sellToken, buyToken, error, buyTokenChainId);
 }
 
 type SlippagelessQuote<CustomQuoteSourceData extends Record<string, any>> = Omit<

@@ -58,6 +58,7 @@ export class LiFiQuoteSource extends AlwaysValidConfigAndContextSource<LiFiSuppo
     components: { fetchService },
     request: {
       chainId,
+      buyTokenChainId,
       sellToken,
       buyToken,
       order,
@@ -71,7 +72,7 @@ export class LiFiQuoteSource extends AlwaysValidConfigAndContextSource<LiFiSuppo
     let url =
       `https://li.quest/v1/quote` +
       `?fromChain=${chainId}` +
-      `&toChain=${chainId}` +
+      `&toChain=${buyTokenChainId}` +
       `&fromToken=${mappedSellToken}` +
       `&toToken=${mappedBuyToken}` +
       `&fromAddress=${takeFrom}` +

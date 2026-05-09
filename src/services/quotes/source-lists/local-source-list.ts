@@ -177,6 +177,7 @@ function mapOrderToBigNumber(request: SourceListQuoteRequest): BuyOrder | SellOr
 function mapTxRequestToSourceRequest(response: QuoteResponseRelevantForTxBuild, timeout: TimeString | undefined): SourceQuoteBuildTxRequest {
   return {
     chainId: response.chainId,
+    buyTokenChainId: response.buyTokenChainId,
     sellToken: response.sellToken.address,
     buyToken: response.buyToken.address,
     type: response.type,
@@ -193,6 +194,7 @@ function mapTxRequestToSourceRequest(response: QuoteResponseRelevantForTxBuild, 
 function mapQuoteRequestToSourceRequest(request: SourceListQuoteRequest) {
   return {
     chainId: request.chainId,
+    buyTokenChainId: request.buyTokenChainId ?? request.chainId,
     sellToken: request.sellToken,
     buyToken: request.buyToken,
     order: mapOrderToBigNumber(request),
