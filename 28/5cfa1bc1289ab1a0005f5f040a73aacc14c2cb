@@ -1,0 +1,47 @@
+src/services/quotes/source-registry.ts
+  s_60bcc4ce93da28::t_3135bdbbba668b 67
+  s_60bcc4ce93da28::t_2dce4ebc132f69 66,68
+  s_60bcc4ce93da28::t_24589a1435bbf9 69
+  s_60bcc4ce93da28::t_b2ee90b40cf8f2 32,34
+  s_60bcc4ce93da28::t_b283e7d144b137 33
+  s_60bcc4ce93da28::t_3d07a010a0823e 9
+src/services/quotes/quote-sources/uniswap-v4-quote-source.ts
+  s_60bcc4ce93da28::t_790e4893b77d73 1-141
+src/services/quotes/quote-sources/across-quote-source.ts
+  s_60bcc4ce93da28::t_409267422076f9 97
+  s_60bcc4ce93da28::t_115ba90009bda2 202,204
+  s_60bcc4ce93da28::t_530abef4b125d2 153-156,160
+  s_60bcc4ce93da28::t_32adf4413e5749 1-96,98-152,157-159,161-201,203,205-207
+src/chains.ts
+  s_60bcc4ce93da28::t_eb845dcb21ab7a 583
+  s_60bcc4ce93da28::t_629a055e4b993b 578-582,584-590
+  s_81624ce4d9fd7d::t_62cf66bbe1d577 570
+src/services/quotes/quote-sources/cow-amm-quote-source.ts
+  s_60bcc4ce93da28::t_f53c56e6925850 1-274
+src/services/quotes/quote-sources/pendle-quote-source.ts
+  s_60bcc4ce93da28::t_4c580b280599d2 1-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "285cfa1bc1289ab1a0005f5f040a73aacc14c2cb",
+  "prompts": {},
+  "sessions": {
+    "s_60bcc4ce93da28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7600d27f-48dd-4710-9a78-20ece9a8e265",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    },
+    "s_81624ce4d9fd7d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b0cc8f91-fe67-4f80-931e-12af675cee41",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
