@@ -6,6 +6,7 @@ import { ParaswapQuoteSource } from './quote-sources/paraswap-quote-source';
 import { ZRXQuoteSource } from './quote-sources/0x-quote-source';
 import { OneInchQuoteSource } from './quote-sources/1inch-quote-source';
 import { UniswapQuoteSource } from './quote-sources/uniswap-quote-source';
+import { UniswapV4QuoteSource } from './quote-sources/uniswap-v4-quote-source';
 import { OpenOceanQuoteSource } from './quote-sources/open-ocean-quote-source';
 import { LiFiQuoteSource } from './quote-sources/li-fi-quote-source';
 import { KyberswapQuoteSource } from './quote-sources/kyberswap-quote-source';
@@ -28,6 +29,9 @@ import { NordsternQuoteSource } from './quote-sources/nordstern-quote-source';
 import { RelayQuoteSource } from './quote-sources/relay-quote-source';
 import { AerodromeQuoteSource } from './quote-sources/aerodrome-quote-source';
 import { CowSwapQuoteSource } from './quote-sources/cow-swap-quote-source';
+import { CowAMMQuoteSource } from './quote-sources/cow-amm-quote-source';
+import { AcrossQuoteSource } from './quote-sources/across-quote-source';
+import { PendleQuoteSource } from './quote-sources/pendle-quote-source';
 // Solana sources
 import { JupiterQuoteSource } from './quote-sources/jupiter-quote-source';
 
@@ -59,6 +63,10 @@ export const QUOTE_SOURCES = {
   relay: new RelayQuoteSource(),
   aerodrome: new AerodromeQuoteSource(),
   'cow-swap': new CowSwapQuoteSource(),
+  'cow-amm': new CowAMMQuoteSource(),
+  across: new AcrossQuoteSource(),
+  pendle: new PendleQuoteSource(),
+  'uniswap-v4': new UniswapV4QuoteSource(),
   // Solana sources
   jupiter: new JupiterQuoteSource(),
 } satisfies Record<SourceId, IQuoteSource<QuoteSourceSupport, any>>;
