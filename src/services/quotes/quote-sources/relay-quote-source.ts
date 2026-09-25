@@ -54,6 +54,7 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
   async quote({ components, request, config }: QuoteParams<RelaySupport, RelayConfig>): Promise<SourceQuoteResponse<RelayData>> {
     const {
       chainId,
+      buyTokenChainId,
       sellToken,
       buyToken,
       order,
@@ -67,7 +68,7 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     const body = {
       user: takeFrom,
       originChainId: chainId,
-      destinationChainId: chainId,
+      destinationChainId: buyTokenChainId ?? chainId,
       originCurrency,
       destinationCurrency,
       amount: order.sellAmount.toString(),
