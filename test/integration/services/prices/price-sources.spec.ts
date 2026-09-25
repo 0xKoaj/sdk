@@ -3,7 +3,6 @@ import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import dotenv from 'dotenv';
 import { DefiLlamaPriceSource } from '@services/prices/price-sources/defi-llama-price-source';
-import { OdosPriceSource } from '@services/prices/price-sources/odos-price-source';
 import { CoingeckoPriceSource } from '@services/prices/price-sources/coingecko-price-source';
 import { CachedPriceSource } from '@services/prices/price-sources/cached-price-source';
 import { FetchService } from '@services/fetch/fetch-service';
@@ -30,7 +29,7 @@ const TESTS: Record<ChainId, { address: TokenAddress; symbol: string }> = {
 
 const FETCH_SERVICE = new FetchService();
 const DEFI_LLAMA_PRICE_SOURCE = new DefiLlamaPriceSource(FETCH_SERVICE);
-const ODOS_PRICE_SOURCE = new OdosPriceSource(FETCH_SERVICE);
+const COINGECKO_PRICE_SOURCE = new CoingeckoPriceSource(FETCH_SERVICE);
 const CACHED_PRICE_SOURCE = new CachedPriceSource(DEFI_LLAMA_PRICE_SOURCE, {
   expiration: {
     useCachedValue: 'always',
@@ -43,18 +42,16 @@ const ALCHEMY_PRICE_SOURCE = new AlchemyPriceSource({
   key: process.env.ALCHEMY_API_KEY!,
   fetch: FETCH_SERVICE,
 });
-const PRIORITIZED_PRICE_SOURCE = new PrioritizedPriceSource([ODOS_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE]);
-const FASTEST_PRICE_SOURCE = new FastestPriceSource([ODOS_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE]);
-const AGGREGATOR_PRICE_SOURCE = new AggregatorPriceSource([ODOS_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE], 'median');
+const PRIORITIZED_PRICE_SOURCE = new PrioritizedPriceSource([COINGECKO_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE]);
+const FASTEST_PRICE_SOURCE = new FastestPriceSource([COINGECKO_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE]);
+const AGGREGATOR_PRICE_SOURCE = new AggregatorPriceSource([COINGECKO_PRICE_SOURCE, DEFI_LLAMA_PRICE_SOURCE], 'median');
 const BATCH_PRICE_SOURCE = new BatchPriceSource(DEFI_LLAMA_PRICE_SOURCE, { maxSize: 1000, maxDelay: '1s' });
-const COINGECKO_PRICE_SOURCE = new CoingeckoPriceSource(FETCH_SERVICE);
 
 jest.retryTimes(2);
 jest.setTimeout(ms('1m'));
 
 describe('Token Price Sources', () => {
   priceSourceTest({ title: 'Defi Llama Source', source: DEFI_LLAMA_PRICE_SOURCE });
-  priceSourceTest({ title: 'Odos Source', source: ODOS_PRICE_SOURCE });
   priceSourceTest({ title: 'Cached Price Source', source: CACHED_PRICE_SOURCE });
   priceSourceTest({ title: 'Prioritized Source', source: PRIORITIZED_PRICE_SOURCE });
   priceSourceTest({ title: 'Fastest Source', source: FASTEST_PRICE_SOURCE });

@@ -5,15 +5,10 @@ export const CONFIG: SourceConfig = {
     referrer: { address: '0x0000000000000000000000000000000000000001', name: 'IntegrationTest' },
     disableValidation: true,
   },
-  custom: {
-    odos: { sourceDenylist: ['Hashflow'] },
-  },
+  custom: {},
 };
 if (process.env.RANGO_API_KEY) {
   CONFIG.custom!.rango = { apiKey: process.env.RANGO_API_KEY };
-}
-if (process.env.CHANGELLY_API_KEY) {
-  CONFIG.custom!.changelly = { apiKey: process.env.CHANGELLY_API_KEY };
 }
 if (process.env.ZRX_API_KEY) {
   CONFIG.custom!['0x'] = { apiKey: process.env.ZRX_API_KEY };

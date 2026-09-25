@@ -34,10 +34,10 @@ describe('Local Source List', () => {
         const quotes = sourceList.getQuotes({
           ...REQUEST,
           order: { type: 'buy', buyAmount: 100 },
-          sources: ['odos'],
+          sources: ['kyberswap'],
         });
         expect(Object.keys(quotes)).to.have.lengthOf(1);
-        await expect(quotes['odos']).to.have.rejectedWith(`Source with id 'odos' does not support buy orders`);
+        await expect(quotes['kyberswap']).to.have.rejectedWith(`Source with id 'kyberswap' does not support buy orders`);
       });
     });
 

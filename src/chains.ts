@@ -567,13 +567,26 @@ export const EVMChains = {
     name: 'Berachain',
     ids: ['berachain', 'bera'],
     nativeCurrency: { symbol: 'BERA', name: 'Berachain' },
-    wToken: '0x5806E416dA447b267cEA759358cF22Cc19b4a74',
+    wToken: '0x5806e416da447b267cea759358cf22cc19b4a74',
     publicRPCs: [
       'https://rpc.berachain.com',
       'https://berachain-rpc.publicnode.com',
       'https://1rpc.io/bera',
     ],
     explorer: 'https://berascan.com/',
+  },
+  MONAD_TESTNET: {
+    chainId: 10143,
+    name: 'Monad Testnet',
+    ids: ['monad-testnet'],
+    nativeCurrency: { symbol: 'MON', name: 'Monad' },
+    wToken: '0x760afe86e5de5fa0ee542fc7b7b713e1c5425701',
+    publicRPCs: [
+      'https://testnet-rpc.monad.xyz',
+      'https://monad-testnet.drpc.org',
+    ],
+    explorer: 'https://testnet.monadexplorer.com/',
+    testnet: true,
   },
   ETHEREUM_GOERLI: {
     chainId: 5,

@@ -353,7 +353,7 @@ describe('Solana Quote Integration Tests', () => {
         }
 
         // These EVM-only sources should not be available for Solana
-        const evmOnlySources = ['1inch', 'uniswap', 'paraswap', 'odos', 'kyberswap'];
+        const evmOnlySources = ['1inch', 'uniswap', 'paraswap', 'kyberswap'];
         for (const source of evmOnlySources) {
           expect(sources).to.not.include(source);
         }

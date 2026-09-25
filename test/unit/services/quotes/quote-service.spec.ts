@@ -7,7 +7,7 @@ import { IQuoteSourceList, QuoteRequest, QuoteTransaction } from '@services/quot
 import { IPriceService } from '@services/prices';
 import { IMetadataService } from '@services/metadata';
 import { BaseTokenMetadata } from '@services/metadata/types';
-import { CHANGELLY_METADATA } from '@services/quotes/quote-sources/changelly-quote-source';
+import { ONE_INCH_METADATA } from '@services/quotes/quote-sources/1inch-quote-source';
 import { SourceListQuoteResponse } from '@services/quotes/source-lists/types';
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
@@ -105,7 +105,7 @@ const REQUEST: { request: QuoteRequest } = {
 };
 
 const SOURCE_LIST: IQuoteSourceList = {
-  supportedSources: () => ({ [SOURCE]: CHANGELLY_METADATA }),
+  supportedSources: () => ({ [SOURCE]: ONE_INCH_METADATA }),
   getQuotes: () => ({ [SOURCE]: Promise.resolve(RESPONSE) }),
   buildTxs: () => {
     throw new Error('Should not be called');
