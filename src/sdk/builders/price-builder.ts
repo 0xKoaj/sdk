@@ -4,7 +4,6 @@ import { IPriceService, IPriceSource } from '@services/prices';
 import { DefiLlamaPriceSource } from '@services/prices/price-sources/defi-llama-price-source';
 import { PriceService } from '@services/prices/price-service';
 import { CachedPriceSource } from '@services/prices/price-sources/cached-price-source';
-import { OdosPriceSource } from '@services/prices/price-sources/odos-price-source';
 import { CoingeckoPriceSource } from '@services/prices/price-sources/coingecko-price-source';
 import { PrioritizedPriceSource } from '@services/prices/price-sources/prioritized-price-source';
 import { FastestPriceSource } from '@services/prices/price-sources/fastest-price-source';
@@ -16,7 +15,6 @@ import { BatchConfig, BatchPriceSource } from '@services/prices/price-sources/ba
 export type PriceSourceInput =
   | { type: 'defi-llama' }
   | { type: 'codex'; apiKey: string }
-  | { type: 'odos' }
   | { type: 'alchemy'; apiKey: string; onChains?: AlchemySupportedChains }
   | { type: 'coingecko' }
   | { type: 'prioritized'; sources: PriceSourceInput[] }
@@ -47,8 +45,6 @@ function buildSource(source: PriceSourceInput | undefined, { fetchService }: { f
       return new AlchemyPriceSource({ key: source.apiKey, onChains: source.onChains, fetch: fetchService });
     case 'defi-llama':
       return defiLlama;
-    case 'odos':
-      return new OdosPriceSource(fetchService);
     case 'coingecko':
       return coingecko;
     case 'cached': {
