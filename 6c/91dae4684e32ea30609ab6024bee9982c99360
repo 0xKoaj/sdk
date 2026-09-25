@@ -1,0 +1,27 @@
+src/services/quotes/quote-sources/kyberswap-quote-source.ts
+  s_cbc099ef4b666b::t_1ba7c9868adbb7 9,21-22
+src/services/quotes/quote-sources/okx-dex-quote-source.ts
+  s_cbc099ef4b666b::t_87cb98ac0caac9 11,29-31
+src/services/quotes/quote-sources/0x-quote-source.ts
+  s_cbc099ef4b666b::t_b485f5e5ea6388 7,13,15,19,22-23
+src/services/quotes/quote-sources/li-fi-quote-source.ts
+  s_cbc099ef4b666b::t_95501296842af8 35-38
+src/services/quotes/quote-sources/1inch-quote-source.ts
+  s_cbc099ef4b666b::t_f5dd3c5a1a58d2 22-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6c91dae4684e32ea30609ab6024bee9982c99360",
+  "prompts": {},
+  "sessions": {
+    "s_cbc099ef4b666b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fbd23b4-57fd-4382-b917-67649b51d52d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
