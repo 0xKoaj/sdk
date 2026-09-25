@@ -1,0 +1,16 @@
+src/services/quotes/quote-sources/pendle-quote-source.ts
+  h_9d79469970cfea 66
+src/services/quotes/quote-sources/sushiswap-quote-source.ts
+  h_9d79469970cfea 70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5e8d11f372b9de8592ca44728c2ae5b7ef1e62ae",
+  "prompts": {},
+  "humans": {
+    "h_9d79469970cfea": {
+      "author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
