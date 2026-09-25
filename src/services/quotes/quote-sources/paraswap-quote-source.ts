@@ -5,20 +5,26 @@ import { AlwaysValidConfigAndContextSource } from './base/always-valid-source';
 import { BuildTxParams, QuoteParams, QuoteSourceMetadata, SourceQuoteResponse, SourceQuoteTransaction } from './types';
 import { addQuoteSlippage, calculateAllowanceTarget, failed } from './utils';
 
+// ParaSwap rebranded to Velora; api.paraswap.io is deprecated in favour of api.velora.xyz
+// Docs: https://www.velora.xyz/docs/api-reference/market/prices
+const VELORA_API_URL = 'https://api.velora.xyz';
+// Without a partner string Velora falls back to 'anon', which charges 1 bps on every swap
+const DEFAULT_PARTNER = 'onlyswaps';
+
 const PARASWAP_METADATA: QuoteSourceMetadata<ParaswapSupport> = {
-  name: 'Paraswap',
+  name: 'Velora',
   supports: {
     chains: [
       Chains.ETHEREUM.chainId,
-      Chains.POLYGON.chainId,
-      Chains.BNB_CHAIN.chainId,
-      Chains.AVALANCHE.chainId,
-      Chains.FANTOM.chainId,
-      Chains.ARBITRUM.chainId,
       Chains.OPTIMISM.chainId,
-      Chains.POLYGON_ZKEVM.chainId,
-      Chains.BASE.chainId,
+      Chains.BNB_CHAIN.chainId,
       Chains.GNOSIS.chainId,
+      Chains.UNICHAIN.chainId,
+      Chains.POLYGON.chainId,
+      Chains.SONIC.chainId,
+      Chains.BASE.chainId,
+      Chains.ARBITRUM.chainId,
+      Chains.AVALANCHE.chainId,
     ],
     swapAndTransfer: true,
     buyOrders: true,
@@ -26,7 +32,7 @@ const PARASWAP_METADATA: QuoteSourceMetadata<ParaswapSupport> = {
   logoURI: 'ipfs://QmVtj4RwZ5MMfKpbfv8qXksb5WYBJsQXkaZXLq7ipvMNW5',
 };
 type ParaswapSupport = { buyOrders: true; swapAndTransfer: true };
-type ParaswapConfig = { sourceAllowlist?: string[]; sourceDenylist?: string[] };
+type ParaswapConfig = { sourceAllowlist?: string[]; sourceDenylist?: string[]; partner?: string };
 type ParaswapData = { tx: SourceQuoteTransaction };
 export class ParaswapQuoteSource extends AlwaysValidConfigAndContextSource<ParaswapSupport, ParaswapConfig, ParaswapData> {
   getMetadata(): QuoteSourceMetadata<ParaswapSupport> {
@@ -50,39 +56,62 @@ export class ParaswapQuoteSource extends AlwaysValidConfigAndContextSource<Paras
       sellToken: { decimals: srcDecimals },
       buyToken: { decimals: destDecimals },
     } = await external.tokenData.request();
-    const queryParams = {
-      network: chainId,
-      srcToken: sellToken,
-      destToken: buyToken,
-      amount: order.type === 'sell' ? order.sellAmount : order.buyAmount,
-      side: order.type.toUpperCase(),
-      srcDecimals,
-      destDecimals,
-      includeDEXS: config.sourceAllowlist,
-      excludeDEXS: config.sourceDenylist,
-      slippage: slippagePercentage * 100,
-      userAddress: takeFrom,
-      receiver: takeFrom !== recipient ? recipient : undefined,
-      partner: config.referrer?.name,
-      partnerAddress: config.referrer?.address,
-      partnerFeeBps: 0,
-      deadline: calculateDeadline(txValidFor),
-      version: '6.2',
-    };
-    const queryString = qs.stringify(queryParams, { skipNulls: true, arrayFormat: 'comma' });
-    const url = `https://api.paraswap.io/swap?${queryString}`;
-    const response = await fetchService.fetch(url, { timeout });
-    if (!response.ok) {
-      failed(PARASWAP_METADATA, chainId, sellToken, buyToken, await response.text());
+    const partner = config.partner ?? config.referrer?.name ?? DEFAULT_PARTNER;
+    const receiver = recipient && recipient.toLowerCase() !== takeFrom.toLowerCase() ? recipient : undefined;
+
+    const pricesQuery = qs.stringify(
+      {
+        network: chainId,
+        srcToken: sellToken,
+        destToken: buyToken,
+        amount: order.type === 'sell' ? order.sellAmount : order.buyAmount,
+        side: order.type.toUpperCase(),
+        srcDecimals,
+        destDecimals,
+        includeDEXS: config.sourceAllowlist,
+        excludeDEXS: config.sourceDenylist,
+        userAddress: takeFrom,
+        receiver,
+        partner,
+        version: '6.2',
+      },
+      { skipNulls: true, arrayFormat: 'comma' }
+    );
+    const pricesResponse = await fetchService.fetch(`${VELORA_API_URL}/prices?${pricesQuery}`, { timeout });
+    if (!pricesResponse.ok) {
+      failed(PARASWAP_METADATA, chainId, sellToken, buyToken, await pricesResponse.text());
     }
-    const {
-      priceRoute,
-      txParams: { to, data, value },
-    } = await response.json();
+    const { priceRoute } = await pricesResponse.json();
+
+    // ignoreChecks: the taker (e.g. a Permit2 adapter) holds no balance or allowance at quote time
+    const transactionResponse = await fetchService.fetch(`${VELORA_API_URL}/transactions/${chainId}?ignoreChecks=true`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceRoute,
+        srcToken: sellToken,
+        srcDecimals,
+        destToken: buyToken,
+        destDecimals,
+        ...(order.type === 'sell' ? { srcAmount: priceRoute.srcAmount } : { destAmount: priceRoute.destAmount }),
+        slippage: Math.round(slippagePercentage * 100),
+        userAddress: takeFrom,
+        receiver,
+        partner,
+        partnerAddress: config.referrer?.address,
+        deadline: calculateDeadline(txValidFor),
+      }),
+      timeout,
+    });
+    if (!transactionResponse.ok) {
+      failed(PARASWAP_METADATA, chainId, sellToken, buyToken, await transactionResponse.text());
+    }
+    const { to, data, value } = await transactionResponse.json();
+
     const quote = {
       sellAmount: BigInt(priceRoute.srcAmount),
       buyAmount: BigInt(priceRoute.destAmount),
-      estimatedGas: BigInt(priceRoute.gasCost),
+      estimatedGas: priceRoute.gasCost ? BigInt(priceRoute.gasCost) : undefined,
       allowanceTarget: calculateAllowanceTarget(sellToken, priceRoute.tokenTransferProxy),
       customData: {
         tx: {
