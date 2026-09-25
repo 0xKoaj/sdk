@@ -63,7 +63,7 @@ export class PendleQuoteSource implements IQuoteSource<PendleSupport, PendleConf
       outputs: [tokenOut],
     };
 
-    const response = await fetchService.fetch(`${PENDLE_API_URL}/v3/${chainId}/convert`, {
+    const response = await fetchService.fetch(`${PENDLE_API_URL}/v3/sdk/${chainId}/convert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

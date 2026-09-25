@@ -67,7 +67,7 @@ export class SushiswapQuoteSource extends AlwaysValidConfigAndContextSource<Sush
     };
 
     const queryString = qs.stringify(queryParams, { skipNulls: true, arrayFormat: 'comma' });
-    const quoteResponse = await fetchService.fetch(`https://api.sushi.com/swap/v6/${chainId}?${queryString}`, {
+    const quoteResponse = await fetchService.fetch(`https://api.sushi.com/swap/v7/${chainId}?${queryString}`, {
       headers: { 'Content-Type': 'application/json' },
       timeout,
     });
