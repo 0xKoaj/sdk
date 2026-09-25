@@ -26,6 +26,7 @@ import { CowSwapQuoteSource } from './quote-sources/cow-swap-quote-source';
 import { CowAMMQuoteSource } from './quote-sources/cow-amm-quote-source';
 import { AcrossQuoteSource } from './quote-sources/across-quote-source';
 import { PendleQuoteSource } from './quote-sources/pendle-quote-source';
+import { NativeQuoteSource } from './quote-sources/native-quote-source';
 // Solana sources
 import { JupiterQuoteSource } from './quote-sources/jupiter-quote-source';
 
@@ -55,6 +56,7 @@ export const QUOTE_SOURCES = {
   'cow-amm': new CowAMMQuoteSource(),
   across: new AcrossQuoteSource(),
   pendle: new PendleQuoteSource(),
+  native: new NativeQuoteSource(),
   // Solana sources
   jupiter: new JupiterQuoteSource(),
 } satisfies Record<SourceId, IQuoteSource<QuoteSourceSupport, any>>;
