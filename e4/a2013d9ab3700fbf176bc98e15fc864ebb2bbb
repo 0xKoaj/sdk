@@ -1,0 +1,14 @@
+package.json
+  h_9d79469970cfea 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e4a2013d9ab3700fbf176bc98e15fc864ebb2bbb",
+  "prompts": {},
+  "humans": {
+    "h_9d79469970cfea": {
+      "author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
