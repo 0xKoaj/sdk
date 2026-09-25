@@ -1,38 +1,47 @@
-import { Chains, getChainByKey } from '@chains';
-import { ChainId, Chain, TokenAddress } from '@types';
+import { Chains } from '@chains';
+import { Address, TokenAddress } from '@types';
 import { Addresses } from '@shared/constants';
-import { isSameAddress, subtractPercentage, timeToSeconds } from '@shared/utils';
-import { QuoteParams, QuoteSourceMetadata, SourceQuoteResponse, SourceQuoteTransaction, BuildTxParams } from './types';
+import { calculateDeadline, isSameAddress } from '@shared/utils';
+import { IQuoteSource, QuoteParams, QuoteSourceMetadata, SourceQuoteResponse, SourceQuoteTransaction, BuildTxParams } from './types';
 import { addQuoteSlippage, calculateAllowanceTarget, failed } from './utils';
-import { AlwaysValidConfigAndContextSource } from './base/always-valid-source';
-import { encodeFunctionData, parseAbi } from 'viem';
 
-const ROUTER_ADDRESS: Record<ChainId, string> = {
-  [Chains.ETHEREUM.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.OPTIMISM.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.POLYGON.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.ARBITRUM.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.CELO.chainId]: '0x5615CDAb10dc425a742d643d949a7F474C01abc4',
-  [Chains.ETHEREUM_GOERLI.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.POLYGON_MUMBAI.chainId]: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  [Chains.BNB_CHAIN.chainId]: '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
-  [Chains.BASE.chainId]: '0x2626664c2603336E57B271c5C0b26F421741e481',
-  [Chains.AVALANCHE.chainId]: '0xbb00FF08d01D300023C629E8fFfFcb65A5a578cE',
-};
+// Uniswap Trading API — the supported integration path for third parties.
+// The web app's routing API (api.uniswap.org) rejects non-Uniswap origins.
+// Docs: https://developers.uniswap.org/docs/trading/swapping-api
+const TRADING_API_URL = 'https://trade-api.gateway.uniswap.org/v1';
+// Versions 2.0 and 2.1.1 stop being supported on 2026-10-21
+const UNIVERSAL_ROUTER_VERSION = '2.1.2';
+// UniswapX routings need an off-chain user signature, so only on-chain routings are accepted
+const EXECUTABLE_ROUTINGS = ['CLASSIC', 'WRAP', 'UNWRAP'];
 
 const UNISWAP_METADATA: QuoteSourceMetadata<UniswapSupport> = {
   name: 'Uniswap',
   supports: {
-    chains: [...new Set([...Object.keys(ROUTER_ADDRESS).map(Number), Chains.UNICHAIN.chainId])],
+    chains: [
+      Chains.ETHEREUM.chainId,
+      Chains.OPTIMISM.chainId,
+      Chains.BNB_CHAIN.chainId,
+      Chains.UNICHAIN.chainId,
+      Chains.POLYGON.chainId,
+      Chains.ZK_SYNC_ERA.chainId,
+      Chains.BASE.chainId,
+      Chains.ARBITRUM.chainId,
+      Chains.CELO.chainId,
+      Chains.AVALANCHE.chainId,
+      Chains.INK.chainId,
+      Chains.LINEA.chainId,
+      Chains.BLAST.chainId,
+    ],
     swapAndTransfer: true,
     buyOrders: true,
   },
   logoURI: 'ipfs://QmNa3YBYAYS5qSCLuXataV5XCbtxP9ZB4rHUfomRxrpRhJ',
 };
 type UniswapSupport = { buyOrders: true; swapAndTransfer: true };
-type UniswapConfig = {};
+type UniswapConfig = { apiKey: string };
 type UniswapData = { tx: SourceQuoteTransaction };
-export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<UniswapSupport, UniswapConfig, UniswapData> {
+
+export class UniswapQuoteSource implements IQuoteSource<UniswapSupport, UniswapConfig, UniswapData> {
   getMetadata() {
     return UNISWAP_METADATA;
   }
@@ -47,84 +56,64 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
       config: { slippagePercentage, timeout, txValidFor },
       accounts: { takeFrom, recipient },
     },
-  }: QuoteParams<UniswapSupport>): Promise<SourceQuoteResponse<UniswapData>> {
-    const amount = order.type === 'sell' ? order.sellAmount : order.buyAmount;
-    const isSellTokenNativeToken = isSameAddress(sellToken, Addresses.NATIVE_TOKEN);
-    const isBuyTokenNativeToken = isSameAddress(buyToken, Addresses.NATIVE_TOKEN);
-    if (isSellTokenNativeToken && order.type === 'buy') {
-      // We do this because it's very hard and expensive to wrap native to wToken, spend only
-      // some of it and then return the extra native token to the caller
-      throw new Error(`Uniswap does not support buy orders with native token`);
-    }
-    const router = ROUTER_ADDRESS[chainId];
-    recipient = recipient ?? takeFrom;
-    const url =
-      'https://api.uniswap.org/v1/quote' +
-      '?protocols=v2,v3,v4,mixed' +
-      `&tokenInAddress=${mapToWTokenIfNecessary(chainId, sellToken)}` +
-      `&tokenInChainId=${chainId}` +
-      `&tokenOutAddress=${mapToWTokenIfNecessary(chainId, buyToken)}` +
-      `&tokenOutChainId=${chainId}` +
-      `&amount=${amount.toString()}` +
-      `&type=${order.type === 'sell' ? 'exactIn' : 'exactOut'}` +
-      `&recipient=${isBuyTokenNativeToken ? (router ?? recipient) : recipient}` +
-      `&deadline=${timeToSeconds(txValidFor ?? '3h')}` +
-      `&slippageTolerance=${slippagePercentage}`;
-
-    // These are needed so that the API allows us to make the call
+    config,
+  }: QuoteParams<UniswapSupport, UniswapConfig>): Promise<SourceQuoteResponse<UniswapData>> {
+    // Permit2 disabled: the swapper may be a contract (e.g. a Permit2 adapter) that cannot sign
     const headers = {
-      origin: 'https://app.uniswap.org',
-      referer: 'https://app.uniswap.org/',
+      'Content-Type': 'application/json',
+      'x-api-key': config.apiKey,
+      'x-permit2-disabled': 'true',
+      'x-universal-router-version': UNIVERSAL_ROUTER_VERSION,
     };
-    const response = await fetchService.fetch(url, { headers, timeout });
-    if (!response.ok) {
-      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, await response.text());
+
+    const quoteResponse = await fetchService.fetch(`${TRADING_API_URL}/quote`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        type: order.type === 'sell' ? 'EXACT_INPUT' : 'EXACT_OUTPUT',
+        amount: (order.type === 'sell' ? order.sellAmount : order.buyAmount).toString(),
+        tokenInChainId: chainId,
+        tokenOutChainId: chainId,
+        tokenIn: mapToTradingApiToken(sellToken),
+        tokenOut: mapToTradingApiToken(buyToken),
+        swapper: takeFrom,
+        recipient: recipient ?? takeFrom,
+        slippageTolerance: slippagePercentage,
+        routingPreference: 'BEST_PRICE',
+        protocols: ['V2', 'V3', 'V4'],
+      }),
+      timeout,
+    });
+    if (!quoteResponse.ok) {
+      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, await quoteResponse.text());
     }
-    let {
-      quote: quoteAmount,
-      methodParameters: { calldata, to: routerOverride },
-      gasUseEstimate,
-    } = await response.json();
-    const sellAmount = order.type === 'sell' ? order.sellAmount : BigInt(quoteAmount);
-    const buyAmount = order.type === 'sell' ? BigInt(quoteAmount) : order.buyAmount;
-    const value = isSellTokenNativeToken ? sellAmount : undefined;
-
-    // Use router address from API response (supports v4 Universal Router) with legacy fallback
-    const effectiveRouter = (routerOverride as string | undefined) ?? router;
-    if (!effectiveRouter) {
-      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, 'No router address available for this chain');
-    }
-
-    // SwapRouter02 (legacy v3) does not auto-unwrap WETH — wrap calldata manually.
-    // Universal Router (v4) handles native ETH output internally via its sweep commands.
-    const usesLegacyRouter = effectiveRouter === router;
-    if (isBuyTokenNativeToken && usesLegacyRouter) {
-      const minBuyAmount = calculateMinBuyAmount(order.type, buyAmount, slippagePercentage);
-      const unwrapData = encodeFunctionData({
-        abi: ROUTER_ABI,
-        functionName: 'unwrapWETH9',
-        args: [minBuyAmount, recipient],
-      });
-      const multicallData = encodeFunctionData({
-        abi: ROUTER_ABI,
-        functionName: 'multicall',
-        args: [[calldata, unwrapData]],
-      });
-
-      calldata = multicallData!;
-      gasUseEstimate = BigInt(gasUseEstimate) + 12_500n;
+    const quoteResult = await quoteResponse.json();
+    if (!EXECUTABLE_ROUTINGS.includes(quoteResult.routing)) {
+      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, `Unsupported routing ${quoteResult.routing}`);
     }
 
+    const swapResponse = await fetchService.fetch(`${TRADING_API_URL}/swap`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ quote: quoteResult.quote, deadline: calculateDeadline(txValidFor) }),
+      timeout,
+    });
+    if (!swapResponse.ok) {
+      failed(UNISWAP_METADATA, chainId, sellToken, buyToken, await swapResponse.text());
+    }
+    const { swap } = await swapResponse.json();
+
+    const { input, output, gasUseEstimate } = quoteResult.quote;
     const quote = {
-      sellAmount,
-      buyAmount,
-      estimatedGas: BigInt(gasUseEstimate),
-      allowanceTarget: calculateAllowanceTarget(sellToken, effectiveRouter),
+      sellAmount: BigInt(input.amount),
+      buyAmount: BigInt(output.amount),
+      estimatedGas: gasUseEstimate ? BigInt(gasUseEstimate) : undefined,
+      allowanceTarget: calculateAllowanceTarget(sellToken, swap.to as Address),
       customData: {
         tx: {
-          to: effectiveRouter,
-          calldata,
-          value,
+          to: swap.to,
+          calldata: swap.data,
+          value: BigInt(swap.value ?? 0),
         },
       },
     };
@@ -134,20 +123,17 @@ export class UniswapQuoteSource extends AlwaysValidConfigAndContextSource<Uniswa
   async buildTx({ request }: BuildTxParams<UniswapConfig, UniswapData>): Promise<SourceQuoteTransaction> {
     return request.customData.tx;
   }
+
+  isConfigAndContextValidForQuoting(config: Partial<UniswapConfig> | undefined): config is UniswapConfig {
+    return !!config?.apiKey;
+  }
+
+  isConfigAndContextValidForTxBuilding(config: Partial<UniswapConfig> | undefined): config is UniswapConfig {
+    return true;
+  }
 }
 
-function calculateMinBuyAmount(type: 'sell' | 'buy', buyAmount: bigint, slippagePercentage: number) {
-  return type === 'sell' ? BigInt(subtractPercentage(buyAmount, slippagePercentage, 'up')) : buyAmount;
+// The Trading API uses the zero address for the chain's native token
+function mapToTradingApiToken(token: TokenAddress): TokenAddress {
+  return isSameAddress(token, Addresses.NATIVE_TOKEN) ? Addresses.ZERO_ADDRESS : token;
 }
-
-function mapToWTokenIfNecessary(chainId: ChainId, address: TokenAddress) {
-  const chain = getChainByKey(chainId);
-  return chain && isSameAddress(address, Addresses.NATIVE_TOKEN) ? chain.wToken : address;
-}
-
-const ROUTER_HUMAN_READABLE_ABI = [
-  'function unwrapWETH9(uint256 amountMinimum, address recipient) payable',
-  'function multicall(bytes[] data) payable returns (bytes[] memory results)',
-];
-
-const ROUTER_ABI = parseAbi(ROUTER_HUMAN_READABLE_ABI);
