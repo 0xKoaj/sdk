@@ -20,11 +20,16 @@ describe('Native Quote Source', () => {
   when('no api key is configured', () => {
     then('the source is not valid for quoting', () => {
       expect(source.isConfigAndContextValidForQuoting(undefined)).to.be.false;
+    });
+  });
+
+  when('an api key is configured', () => {
+    then('the source is valid for quoting', () => {
       expect(source.isConfigAndContextValidForQuoting({ apiKey: 'key' })).to.be.true;
     });
   });
 
-  then('requests a firm quote paid out to the recipient and returns the router calldata', async () => {
+  then('requests a firm quote paid out to the taker and returns the router calldata', async () => {
     const { fetchService, requests } = createRecordingFetch({ '/firm-quote': { body: FIRM_QUOTE } });
     const quote = await source.quote(createEvmQuoteParams<any, any>({ fetchService, config: { apiKey: 'key' }, chainId: 8453 }));
 
@@ -42,6 +47,26 @@ describe('Native Quote Source', () => {
     expect(quote.buyAmount).to.equal(37100000000000000n);
     expect(quote.allowanceTarget).to.equal(ROUTER);
     expect(quote.customData.tx).to.deep.equal({ to: ROUTER, calldata: '0xaf706539', value: 0n });
+  });
+
+  when('the recipient differs from the taker', () => {
+    then('the quote pays out to the recipient', async () => {
+      const recipient = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
+      const { fetchService, requests } = createRecordingFetch({ '/firm-quote': { body: FIRM_QUOTE } });
+      await source.quote(createEvmQuoteParams<any, any>({ fetchService, config: { apiKey: 'key' }, recipient }));
+      const query = new URL(requests[0].url).searchParams;
+      expect(query.get('from_address')).to.equal(recipient);
+      expect(query.get('beneficiary_address')).to.equal(recipient);
+    });
+  });
+
+  when('the response has no output amount', () => {
+    then('the quote fails instead of throwing a TypeError', async () => {
+      const { fetchService } = createRecordingFetch({ '/firm-quote': { body: { ...FIRM_QUOTE, amountOut: undefined } } });
+      await expect(source.quote(createEvmQuoteParams<any, any>({ fetchService, config: { apiKey: 'key' } }))).to.be.rejectedWith(
+        'No firm quote'
+      );
+    });
   });
 
   when('Native cannot quote the pair', () => {

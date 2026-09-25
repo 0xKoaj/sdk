@@ -37,7 +37,13 @@ describe('Uniswap (Trading API) Quote Source', () => {
     expect(quoteRequest.url).to.equal('https://trade-api.gateway.uniswap.org/v1/quote');
     expect(quoteRequest.init.headers).to.include({ 'x-api-key': 'key', 'x-permit2-disabled': 'true', 'x-universal-router-version': '2.1.2' });
     const body = JSON.parse(quoteRequest.init.body);
-    expect(body).to.include({ type: 'EXACT_INPUT', amount: '100000000', tokenInChainId: 1, tokenOutChainId: 1, routingPreference: 'BEST_PRICE' });
+    expect(body).to.include({
+      type: 'EXACT_INPUT',
+      amount: '100000000',
+      tokenInChainId: 1,
+      tokenOutChainId: 1,
+      routingPreference: 'BEST_PRICE',
+    });
     expect(body.protocols).to.deep.equal(['V2', 'V3', 'V4']);
     expect(body.swapper).to.equal('0xED306e38BB930ec9646FF3D917B2e513a97530b1');
 
@@ -57,6 +63,32 @@ describe('Uniswap (Trading API) Quote Source', () => {
       );
       expect(JSON.parse(requests[0].init.body).tokenIn).to.equal('0x0000000000000000000000000000000000000000');
     });
+  });
+
+  when('the order is a buy order', () => {
+    then('requests an EXACT_OUTPUT quote for the buy amount', async () => {
+      const { fetchService, requests } = createRecordingFetch({ '/v1/quote': { body: CLASSIC_QUOTE }, '/v1/swap': { body: SWAP } });
+      await source.quote(
+        createEvmQuoteParams<any, any>({ fetchService, config: { apiKey: 'key' }, order: { type: 'buy', buyAmount: 10_000000000000000n } })
+      );
+      expect(JSON.parse(requests[0].init.body)).to.include({ type: 'EXACT_OUTPUT', amount: '10000000000000000' });
+    });
+  });
+
+  when('the quote request fails', () => {
+    then('the quote fails with the API error and no swap is requested', async () => {
+      const { fetchService, requests } = createRecordingFetch({ '/v1/quote': { status: 401, body: { detail: 'Unauthenticated' } } });
+      await expect(source.quote(createEvmQuoteParams<any, any>({ fetchService, config: { apiKey: 'bad' } }))).to.be.rejectedWith(
+        'Unauthenticated'
+      );
+      expect(requests).to.have.lengthOf(1);
+    });
+  });
+
+  then('always sends a swap deadline', async () => {
+    const { params, requests } = setup();
+    await source.quote(params);
+    expect(JSON.parse(requests[1].init.body).deadline).to.be.a('number');
   });
 
   when('the API answers with a UniswapX routing', () => {

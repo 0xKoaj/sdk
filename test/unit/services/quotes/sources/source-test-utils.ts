@@ -29,14 +29,20 @@ export function createRecordingFetch(routes: Record<string, MockResponse>) {
   return { fetchService, requests };
 }
 
+// USDC -> WETH on each chain the specs use
+const DEFAULT_TOKENS: Record<number, { sellToken: Address; buyToken: Address }> = {
+  1: { sellToken: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', buyToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
+  8453: { sellToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', buyToken: '0x4200000000000000000000000000000000000006' },
+};
+
 export function createEvmQuoteParams<Support extends QuoteSourceSupport, Config extends object>(params: {
   fetchService: IFetchService;
   config: Config;
-  chainId?: ChainId;
+  chainId?: 1 | 8453;
   buyTokenChainId?: ChainId;
   sellToken?: Address;
   buyToken?: Address;
-  sellAmount?: bigint;
+  order?: { type: 'sell'; sellAmount: bigint } | { type: 'buy'; buyAmount: bigint };
   takeFrom?: Address;
   recipient?: Address;
   slippagePercentage?: number;
@@ -51,9 +57,9 @@ export function createEvmQuoteParams<Support extends QuoteSourceSupport, Config 
     request: {
       chainId,
       buyTokenChainId: params.buyTokenChainId ?? chainId,
-      sellToken: params.sellToken ?? '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-      buyToken: params.buyToken ?? '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-      order: { type: 'sell', sellAmount: params.sellAmount ?? 100_000000n },
+      sellToken: params.sellToken ?? DEFAULT_TOKENS[chainId].sellToken,
+      buyToken: params.buyToken ?? DEFAULT_TOKENS[chainId].buyToken,
+      order: params.order ?? { type: 'sell', sellAmount: 100_000000n },
       config: { slippagePercentage: params.slippagePercentage ?? 1, timeout: '10s' },
       accounts: { takeFrom: params.takeFrom ?? '0xED306e38BB930ec9646FF3D917B2e513a97530b1', recipient: params.recipient },
       external: { tokenData: {} as any, gasPrice: {} as any },

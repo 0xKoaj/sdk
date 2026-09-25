@@ -11,6 +11,8 @@ import { addQuoteSlippage, calculateAllowanceTarget, failed } from './utils';
 const TRADING_API_URL = 'https://trade-api.gateway.uniswap.org/v1';
 // Versions 2.0 and 2.1.1 stop being supported on 2026-10-21
 const UNIVERSAL_ROUTER_VERSION = '2.1.2';
+// Same default validity window the previous Uniswap integration used
+const DEFAULT_TX_VALID_FOR = '3h';
 // UniswapX routings need an off-chain user signature, so only on-chain routings are accepted
 const EXECUTABLE_ROUTINGS = ['CLASSIC', 'WRAP', 'UNWRAP'];
 
@@ -95,7 +97,7 @@ export class UniswapQuoteSource implements IQuoteSource<UniswapSupport, UniswapC
     const swapResponse = await fetchService.fetch(`${TRADING_API_URL}/swap`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ quote: quoteResult.quote, deadline: calculateDeadline(txValidFor) }),
+      body: JSON.stringify({ quote: quoteResult.quote, deadline: calculateDeadline(txValidFor ?? DEFAULT_TX_VALID_FOR) }),
       timeout,
     });
     if (!swapResponse.ok) {

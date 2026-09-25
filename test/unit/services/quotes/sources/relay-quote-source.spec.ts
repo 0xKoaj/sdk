@@ -1,7 +1,10 @@
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { RelayQuoteSource } from '@services/quotes/quote-sources/relay-quote-source';
 import { then, when } from '@test-utils/bdd';
 import { createEvmQuoteParams, createRecordingFetch } from './source-test-utils';
+
+chai.use(chaiAsPromised);
 
 const RELAY_RESPONSE = {
   steps: [{ id: 'swap', items: [{ data: { to: '0x0000000000000000000000000000000000000abc', data: '0x1234', value: '0' } }] }],
@@ -19,6 +22,15 @@ describe('Relay Quote Source', () => {
       const body = JSON.parse(requests[0].init.body);
       expect(body.originChainId).to.equal(1);
       expect(body.destinationChainId).to.equal(1);
+    });
+  });
+
+  when('a cross-chain quote fails', () => {
+    then('the error names both chains', async () => {
+      const { fetchService } = createRecordingFetch({ '/quote': { status: 400, body: { message: 'no routes found' } } });
+      await expect(source.quote(createEvmQuoteParams({ fetchService, config: {}, chainId: 1, buyTokenChainId: 8453 }))).to.be.rejectedWith(
+        /to Base/
+      );
     });
   });
 

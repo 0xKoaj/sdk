@@ -86,7 +86,7 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     });
 
     if (!response.ok) {
-      failed(RELAY_METADATA, chainId, sellToken, buyToken, await response.text());
+      failed(RELAY_METADATA, chainId, sellToken, buyToken, await response.text(), buyTokenChainId);
     }
 
     const data = await response.json();
@@ -97,7 +97,7 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     // Find the swap transaction step (not approve)
     const swapStep = steps?.find((step: any) => step.id === 'swap');
     if (!swapStep?.items?.[0]?.data) {
-      failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No swap transaction data in response');
+      failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No swap transaction data in response', buyTokenChainId);
     }
 
     const txData = swapStep.items[0].data;

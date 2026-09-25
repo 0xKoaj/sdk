@@ -41,6 +41,19 @@ describe('Paraswap (Velora) Quote Source', () => {
     expect(body.priceRoute).to.deep.equal(PRICE_ROUTE);
   });
 
+  when('the order is a buy order', () => {
+    then('prices with side=BUY and builds the transaction with destAmount', async () => {
+      const { quoteParams, requests } = params({ order: { type: 'buy', buyAmount: 10_000000000000000n } });
+      await source.quote(quoteParams);
+      const prices = new URL(requests[0].url).searchParams;
+      expect(prices.get('side')).to.equal('BUY');
+      expect(prices.get('amount')).to.equal('10000000000000000');
+      const body = JSON.parse(requests[1].init.body);
+      expect(body.destAmount).to.equal(PRICE_ROUTE.destAmount);
+      expect(body.srcAmount).to.be.undefined;
+    });
+  });
+
   when('no partner is configured', () => {
     then('uses the default partner instead of the fee-charging anon partner', async () => {
       const { quoteParams, requests } = params();

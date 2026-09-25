@@ -74,7 +74,7 @@ export class NativeQuoteSource implements IQuoteSource<NativeSupport, NativeConf
     }
     const result = await response.json();
     // Errors (e.g. invalid key) come back as HTTP 200 with { code, message }
-    if (result.success === false || !result.txRequest) {
+    if (result.success === false || !result.txRequest || !result.amountOut) {
       failed(NATIVE_METADATA, chainId, sellToken, buyToken, result.errorMessage || result.message || 'No firm quote');
     }
 
