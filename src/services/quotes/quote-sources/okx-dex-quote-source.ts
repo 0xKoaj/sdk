@@ -8,13 +8,12 @@ import { Address, ChainId, TimeString } from '@types';
 import { Addresses, Uint } from '@shared/constants';
 import { isSameAddress } from '@shared/utils';
 
-// https://www.okx.com/web3/build/docs/waas/okx-waas-supported-networks
+// Trade-enabled networks: https://web3.okx.com/onchainos/dev-docs/home/supported-chain
 const SUPPORTED_CHAINS = [
   Chains.ETHEREUM,
   Chains.OPTIMISM,
   Chains.POLYGON,
   Chains.BNB_CHAIN,
-  Chains.OKC,
   Chains.AVALANCHE,
   Chains.FANTOM,
   Chains.ARBITRUM,
@@ -22,12 +21,14 @@ const SUPPORTED_CHAINS = [
   Chains.BASE,
   Chains.SCROLL,
   Chains.BLAST,
-  Chains.POLYGON_ZKEVM,
   Chains.CRONOS,
   Chains.MANTLE,
   Chains.METIS_ANDROMEDA,
   Chains.ZK_SYNC_ERA,
   Chains.SONIC,
+  Chains.UNICHAIN,
+  Chains.INK,
+  Chains.PLASMA,
 ];
 
 const OKX_DEX_METADATA: QuoteSourceMetadata<OKXDexSupport> = {
