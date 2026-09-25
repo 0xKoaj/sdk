@@ -1,0 +1,22 @@
+src/services/quotes/quote-sources/paraswap-quote-source.ts
+  s_cbc099ef4b666b::t_2d4a1270cb5a96 102
+  s_cbc099ef4b666b::t_5d67585c587199 8-13,15,20,22-27,35,59-82,84-101,103-110,114
+test/unit/services/quotes/sources/paraswap-quote-source.spec.ts
+  s_cbc099ef4b666b::t_abc7e777a5483f 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dc58881a0845a3e29bdae2813ae4c7eb498e185f",
+  "prompts": {},
+  "sessions": {
+    "s_cbc099ef4b666b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fbd23b4-57fd-4382-b917-67649b51d52d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
