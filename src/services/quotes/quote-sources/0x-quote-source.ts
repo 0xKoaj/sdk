@@ -4,20 +4,23 @@ import { Addresses } from '@shared/constants';
 import { IQuoteSource, QuoteParams, QuoteSourceMetadata, SourceQuoteResponse, SourceQuoteTransaction, BuildTxParams } from './types';
 import { calculateAllowanceTarget, failed } from './utils';
 
-// Supported Networks: https://0x.org/docs/0x-swap-api/introduction#supported-networks
+// Supported Networks: https://docs.0x.org/docs/introduction/supported-chains
 const SUPPORTED_CHAINS = [
   Chains.ETHEREUM,
   Chains.ARBITRUM,
   Chains.AVALANCHE,
   Chains.BASE,
-  Chains.BLAST,
+  Chains.BERACHAIN,
   Chains.BNB_CHAIN,
+  Chains.INK,
   Chains.LINEA,
   Chains.MANTLE,
-  Chains.MODE,
   Chains.OPTIMISM,
+  Chains.PLASMA,
   Chains.POLYGON,
   Chains.SCROLL,
+  Chains.SONIC,
+  Chains.UNICHAIN,
 ];
 
 const ZRX_METADATA: QuoteSourceMetadata<ZRXSupport> = {

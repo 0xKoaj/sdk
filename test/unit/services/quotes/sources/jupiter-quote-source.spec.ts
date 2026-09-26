@@ -205,6 +205,7 @@ function createQuoteParams(overrides: {
     },
     request: {
       chainId: 'solana',
+      buyTokenChainId: 'solana',
       sellToken: 'So11111111111111111111111111111111111111112',
       buyToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
       order: overrides.order,
@@ -234,6 +235,7 @@ function createBuildTxParams(overrides: { fetchService: IFetchService }): BuildT
     },
     request: {
       chainId: 'solana',
+      buyTokenChainId: 'solana',
       sellToken: 'So11111111111111111111111111111111111111112',
       buyToken: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
       type: 'sell',
