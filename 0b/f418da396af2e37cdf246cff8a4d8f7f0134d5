@@ -1,0 +1,22 @@
+test/unit/services/quotes/sources/native-token-handling.spec.ts
+  s_cbc099ef4b666b::t_b12208bcf9eeda 1-59
+  s_cbc099ef4b666b::t_f474d2ea308038 60-62
+src/services/quotes/quote-sources/pendle-quote-source.ts
+  s_cbc099ef4b666b::t_cbb7fa063d4085 51-54,120-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0bf418da396af2e37cdf246cff8a4d8f7f0134d5",
+  "prompts": {},
+  "sessions": {
+    "s_cbc099ef4b666b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fbd23b4-57fd-4382-b917-67649b51d52d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
