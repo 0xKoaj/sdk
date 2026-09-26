@@ -95,10 +95,13 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     // Extract quote details from response
     const { steps, details, fees } = data;
 
-    // The executable step is 'swap' for same-chain and 'deposit' for cross-chain; 'approve' is handled by the caller
-    const swapStep = steps?.find((step: any) => step.id !== 'approve' && step.kind === 'transaction');
-    if (!swapStep?.items?.[0]?.data) {
-      failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No swap transaction data in response', buyTokenChainId);
+    // 'approve' is handled by the caller. What's left must be exactly one transaction: 'swap' for
+    // same-chain, 'deposit' for cross-chain. Anything else can't be executed as a single tx.
+    const expectedStepId = (buyTokenChainId ?? chainId) === chainId ? 'swap' : 'deposit';
+    const executableSteps = steps?.filter((step: any) => step.id !== 'approve' && step.kind === 'transaction') ?? [];
+    const swapStep = executableSteps[0];
+    if (executableSteps.length !== 1 || swapStep.id !== expectedStepId || swapStep.items?.length !== 1 || !swapStep.items[0].data) {
+      failed(RELAY_METADATA, chainId, sellToken, buyToken, `Expected a single '${expectedStepId}' transaction in response`, buyTokenChainId);
     }
 
     const txData = swapStep.items[0].data;

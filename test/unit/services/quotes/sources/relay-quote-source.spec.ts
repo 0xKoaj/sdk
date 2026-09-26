@@ -14,6 +14,14 @@ const RELAY_RESPONSE = {
   fees: {},
 };
 
+// Cross-chain quotes come back as approve + deposit
+const BRIDGE_RESPONSE = {
+  ...RELAY_RESPONSE,
+  steps: [
+    { id: 'deposit', kind: 'transaction', items: [{ data: { to: '0x0000000000000000000000000000000000000abc', data: '0x1234', value: '0' } }] },
+  ],
+};
+
 describe('Relay Quote Source', () => {
   const source = new RelayQuoteSource();
 
@@ -46,6 +54,35 @@ describe('Relay Quote Source', () => {
     });
   });
 
+  when('a cross-chain response also contains a swap step', () => {
+    then('the quote fails instead of executing the origin swap without bridging', async () => {
+      const multiStepResponse = {
+        ...RELAY_RESPONSE,
+        steps: [
+          { id: 'swap', kind: 'transaction', items: [{ data: { to: '0x00000000000000000000000000000000000000cc', data: '0x01' } }] },
+          { id: 'deposit', kind: 'transaction', items: [{ data: { to: '0x00000000000000000000000000000000000000dd', data: '0x02' } }] },
+        ],
+      };
+      const { fetchService } = createRecordingFetch({ '/quote': { body: multiStepResponse } });
+      await expect(source.quote(createEvmQuoteParams({ fetchService, config: {}, chainId: 1, buyTokenChainId: 8453 }))).to.be.rejectedWith(
+        "Expected a single 'deposit' transaction"
+      );
+    });
+  });
+
+  when('a same-chain response comes back as a deposit', () => {
+    then('the quote fails', async () => {
+      const depositResponse = {
+        ...RELAY_RESPONSE,
+        steps: [{ id: 'deposit', kind: 'transaction', items: [{ data: { to: '0x00000000000000000000000000000000000000dd', data: '0x02' } }] }],
+      };
+      const { fetchService } = createRecordingFetch({ '/quote': { body: depositResponse } });
+      await expect(source.quote(createEvmQuoteParams({ fetchService, config: {}, chainId: 1 }))).to.be.rejectedWith(
+        "Expected a single 'swap' transaction"
+      );
+    });
+  });
+
   when('a cross-chain quote fails', () => {
     then('the error names both chains', async () => {
       const { fetchService } = createRecordingFetch({ '/quote': { status: 400, body: { message: 'no routes found' } } });
@@ -57,7 +94,7 @@ describe('Relay Quote Source', () => {
 
   when('the request is cross-chain', () => {
     then('destinationChainId is the buy token chain', async () => {
-      const { fetchService, requests } = createRecordingFetch({ '/quote': { body: RELAY_RESPONSE } });
+      const { fetchService, requests } = createRecordingFetch({ '/quote': { body: BRIDGE_RESPONSE } });
       const quote = await source.quote(
         createEvmQuoteParams({
           fetchService,
