@@ -1,0 +1,21 @@
+src/services/quotes/quote-sources/relay-quote-source.ts
+  s_cbc099ef4b666b::t_5d7f270b605dc1 98-104
+test/unit/services/quotes/sources/relay-quote-source.spec.ts
+  s_cbc099ef4b666b::t_9c7ab95ce5659d 17-24,57-85,97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "26c853fdd985c0618baf852b0ee381c0a8ba1499",
+  "prompts": {},
+  "sessions": {
+    "s_cbc099ef4b666b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fbd23b4-57fd-4382-b917-67649b51d52d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Kevin <0xkoaj@gmail.com>"
+    }
+  }
+}
