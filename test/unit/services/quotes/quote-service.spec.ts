@@ -27,6 +27,58 @@ describe('Quote Service', () => {
       await expect(quotes.source).to.have.rejectedWith('Something failed at list level');
     });
   });
+  describe('source selection by chain support', () => {
+    const metadata = (supports: object) => ({
+      name: 'Source',
+      logoURI: '',
+      supports: { chains: [1, 8453], buyOrders: false, swapAndTransfer: true, ...supports },
+    });
+    const SOURCES = {
+      dex: metadata({}),
+      bridge: metadata({ crossChain: true, sameChain: false }),
+      aggregator: metadata({ crossChain: true }),
+    };
+    function requestedSources(buyTokenChainId: number) {
+      let requested: string[] = [];
+      const sourceList: IQuoteSourceList = {
+        supportedSources: () => SOURCES,
+        getQuotes: ({ sources }) => {
+          requested = sources;
+          return Object.fromEntries(sources.map((id) => [id, Promise.resolve(RESPONSE)]));
+        },
+        buildTxs: () => {
+          throw new Error('Should not be called');
+        },
+      };
+      // Token metadata must be available on both chains or the service drops the chain from every source
+      const metadataService = {
+        ...METADATA_SERVICE,
+        supportedProperties: () => ({ [1]: { symbol: 'present', decimals: 'present' }, [8453]: { symbol: 'present', decimals: 'present' } }),
+      } as IMetadataService<BaseTokenMetadata>;
+      const service = new QuoteService({
+        sourceList,
+        gasService: GAS_SERVICE,
+        metadataService,
+        priceService: PRICE_SERVICE,
+        defaultConfig: undefined,
+      });
+      service.getQuotes({ request: { ...REQUEST.request, chainId: 1, buyTokenChainId } });
+      return requested;
+    }
+
+    when('the request is same-chain', () => {
+      then('bridges that only work cross-chain are skipped', () => {
+        expect(requestedSources(1)).to.have.members(['dex', 'aggregator']);
+      });
+    });
+
+    when('the request is cross-chain', () => {
+      then('only sources that build cross-chain transactions are used', () => {
+        expect(requestedSources(8453)).to.have.members(['bridge', 'aggregator']);
+      });
+    });
+  });
+
   when('request works but gas request fails', () => {
     then('response is returned correctly without gas info', async () => {
       const sourceList = new QuoteService({

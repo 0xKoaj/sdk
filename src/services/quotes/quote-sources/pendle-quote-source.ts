@@ -48,9 +48,10 @@ export class PendleQuoteSource implements IQuoteSource<PendleSupport, PendleConf
       failed(PENDLE_METADATA, chainId, sellToken, buyToken, `Unknown chain: ${chainId}`);
     }
 
-    // Pendle doesn't handle raw native tokens — map to wrapped native
-    const tokenIn = isSameAddress(sellToken, Addresses.NATIVE_TOKEN) ? chain.wToken : sellToken;
-    const tokenOut = isSameAddress(buyToken, Addresses.NATIVE_TOKEN) ? chain.wToken : buyToken;
+    // Pendle takes the zero address for the native token: native sells come back payable
+    // (tx.value = amount) and native buys pay out native, so no wrapping is needed
+    const tokenIn = toPendleToken(sellToken);
+    const tokenOut = toPendleToken(buyToken);
 
     // Pendle slippage is 0-1 (e.g. 0.005 = 0.5%)
     const slippage = slippagePercentage / 100;
@@ -115,4 +116,8 @@ export class PendleQuoteSource implements IQuoteSource<PendleSupport, PendleConf
   isConfigAndContextValidForTxBuilding(_config: Partial<PendleConfig> | undefined): _config is PendleConfig {
     return true;
   }
+}
+
+function toPendleToken(token: string): string {
+  return isSameAddress(token, Addresses.NATIVE_TOKEN) ? Addresses.ZERO_ADDRESS : token;
 }
