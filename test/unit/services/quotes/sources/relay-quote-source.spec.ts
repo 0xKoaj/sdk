@@ -7,7 +7,9 @@ import { createEvmQuoteParams, createRecordingFetch } from './source-test-utils'
 chai.use(chaiAsPromised);
 
 const RELAY_RESPONSE = {
-  steps: [{ id: 'swap', items: [{ data: { to: '0x0000000000000000000000000000000000000abc', data: '0x1234', value: '0' } }] }],
+  steps: [
+    { id: 'swap', kind: 'transaction', items: [{ data: { to: '0x0000000000000000000000000000000000000abc', data: '0x1234', value: '0' } }] },
+  ],
   details: { currencyOut: { amount: '99960000', minimumAmount: '98960000' } },
   fees: {},
 };
@@ -22,6 +24,25 @@ describe('Relay Quote Source', () => {
       const body = JSON.parse(requests[0].init.body);
       expect(body.originChainId).to.equal(1);
       expect(body.destinationChainId).to.equal(1);
+    });
+  });
+
+  when('a cross-chain quote comes back as an approve + deposit', () => {
+    then('the deposit step is used as the transaction', async () => {
+      const bridgeResponse = {
+        ...RELAY_RESPONSE,
+        steps: [
+          { id: 'approve', kind: 'transaction', items: [{ data: { to: '0x00000000000000000000000000000000000000aa', data: '0x095ea7b3' } }] },
+          {
+            id: 'deposit',
+            kind: 'transaction',
+            items: [{ data: { to: '0x00000000000000000000000000000000000000dd', data: '0xdeadbeef', value: '0' } }],
+          },
+        ],
+      };
+      const { fetchService } = createRecordingFetch({ '/quote': { body: bridgeResponse } });
+      const quote = await source.quote(createEvmQuoteParams({ fetchService, config: {}, chainId: 1, buyTokenChainId: 8453 }));
+      expect(quote.customData.tx).to.deep.equal({ to: '0x00000000000000000000000000000000000000dd', calldata: '0xdeadbeef', value: 0n });
     });
   });
 

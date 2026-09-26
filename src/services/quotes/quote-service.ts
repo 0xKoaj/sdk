@@ -292,10 +292,13 @@ export class QuoteService implements IQuoteService {
     const sourcesInChain = this.supportedSourcesInChain({ chainId: request.chainId });
     let sourceIds = Object.keys(sourcesInChain);
 
-    // For cross-chain, only keep sources that also support the buy token chain
+    // Cross-chain requests only go to cross-chain sources that also support the buy token chain;
+    // same-chain requests skip bridges that can't do same-chain swaps
     if (buyTokenChainId !== request.chainId) {
       const sourcesInBuyChain = this.supportedSourcesInChain({ chainId: buyTokenChainId });
-      sourceIds = sourceIds.filter((id) => id in sourcesInBuyChain);
+      sourceIds = sourceIds.filter((id) => id in sourcesInBuyChain && sourcesInChain[id].supports.crossChain);
+    } else {
+      sourceIds = sourceIds.filter((id) => sourcesInChain[id].supports.sameChain !== false);
     }
 
     if (filters?.includeSources) {

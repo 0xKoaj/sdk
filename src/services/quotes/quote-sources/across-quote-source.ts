@@ -12,15 +12,15 @@ const ACROSS_API_URL = 'https://app.across.to/api';
 // SpokePool V3 contract addresses per chain.
 // Source: https://docs.across.to/concepts/contract-addresses
 const SPOKE_POOL_ADDRESSES: Record<number, Address> = {
-  1: '0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5',      // Ethereum
-  10: '0x6f26Bf09B1C792e3228e5467807a900A503c0281',     // Optimism
-  137: '0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096',    // Polygon
-  8453: '0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64',   // Base
-  42161: '0xe35e9842fceaCA96570B734083f4a58e8F7C5f2a',  // Arbitrum
+  1: '0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5', // Ethereum
+  10: '0x6f26Bf09B1C792e3228e5467807a900A503c0281', // Optimism
+  137: '0x9295ee1d8C5b022Be115A2AD3c30C72E34e7F096', // Polygon
+  8453: '0x09aea4b2242abC8bb4BB78D537A67a245A7bEC64', // Base
+  42161: '0xe35e9842fceaCA96570B734083f4a58e8F7C5f2a', // Arbitrum
   59144: '0x7E63A5f1a8F0B4d0934B2f2327DAED3F6bb2ee75', // Linea
   534352: '0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96', // Scroll
-  81457: '0x2D509190Ed0172ba588407D4c2df918F955Cc6E1',  // Blast
-  34443: '0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96',  // Mode
+  81457: '0x2D509190Ed0172ba588407D4c2df918F955Cc6E1', // Blast
+  34443: '0x3baD7AD0728f9917d1Bf08af5782dCbD516cDd96', // Mode
 };
 
 const DEPOSIT_V3_ABI = [
@@ -66,12 +66,15 @@ const ACROSS_METADATA: QuoteSourceMetadata<AcrossSupport> = {
     chains: SAME_CHAIN_SUPPORT.map(({ chainId }) => chainId),
     swapAndTransfer: true,
     buyOrders: false,
+    crossChain: true,
+    // Across rejects requests whose origin and destination chains are the same
+    sameChain: false,
   },
   logoURI: 'ipfs://QmX7UJB8VG27X4FHuKJPN3jZZFhvyGFo7zidBaUQGjx5oP',
 };
 
 type AcrossConfig = {};
-type AcrossSupport = { buyOrders: false; swapAndTransfer: true };
+type AcrossSupport = { buyOrders: false; swapAndTransfer: true; crossChain: true; sameChain: false };
 type AcrossData = {
   tx: SourceQuoteTransaction;
   outputAmount: bigint;

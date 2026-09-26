@@ -6,7 +6,14 @@ import { BaseTokenMetadata } from '@services/metadata/types';
 import { IProviderService } from '@services/providers';
 import { ITriggerablePromise } from '@shared/triggerable-promise';
 
-export type QuoteSourceSupport = { buyOrders: boolean; swapAndTransfer: boolean };
+export type QuoteSourceSupport = {
+  buyOrders: boolean;
+  swapAndTransfer: boolean;
+  /** Builds transactions that deliver on `buyTokenChainId` when it differs from `chainId`. Defaults to false */
+  crossChain?: boolean;
+  /** Set to false for bridges that reject same-chain requests. Defaults to true */
+  sameChain?: boolean;
+};
 export type QuoteSourceMetadata<Support extends QuoteSourceSupport> = {
   name: string;
   supports: { chains: ChainId[] } & Support;

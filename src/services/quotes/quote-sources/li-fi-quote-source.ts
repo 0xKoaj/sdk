@@ -39,11 +39,12 @@ const LI_FI_METADATA: QuoteSourceMetadata<LiFiSupport> = {
     ],
     swapAndTransfer: true,
     buyOrders: false,
+    crossChain: true,
   },
   logoURI: 'ipfs://QmUgcnaNxsgQdjBjytxvXfeSfsDryh9bF4mNaz1Bp5QwJ4',
 };
 type LiFiConfig = { apiKey?: string };
-type LiFiSupport = { buyOrders: false; swapAndTransfer: true };
+type LiFiSupport = { buyOrders: false; swapAndTransfer: true; crossChain: true };
 type LiFiData = { tx: SourceQuoteTransaction };
 export class LiFiQuoteSource extends AlwaysValidConfigAndContextSource<LiFiSupport, LiFiConfig> {
   getMetadata() {

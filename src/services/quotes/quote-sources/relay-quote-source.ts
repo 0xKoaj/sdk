@@ -38,12 +38,13 @@ const RELAY_METADATA: QuoteSourceMetadata<RelaySupport> = {
     chains: SUPPORTED_CHAINS.map(({ chainId }) => chainId),
     swapAndTransfer: true,
     buyOrders: false,
+    crossChain: true,
   },
   logoURI: 'ipfs://QmUvZnMTfdK3fzrZdLfMn47UKdKTkVkBD3PqLwDzKKgK2e',
 };
 
 type RelayConfig = { apiKey?: string };
-type RelaySupport = { buyOrders: false; swapAndTransfer: true };
+type RelaySupport = { buyOrders: false; swapAndTransfer: true; crossChain: true };
 type RelayData = { tx: SourceQuoteTransaction };
 
 export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig, RelayData> {
@@ -94,8 +95,8 @@ export class RelayQuoteSource implements IQuoteSource<RelaySupport, RelayConfig,
     // Extract quote details from response
     const { steps, details, fees } = data;
 
-    // Find the swap transaction step (not approve)
-    const swapStep = steps?.find((step: any) => step.id === 'swap');
+    // The executable step is 'swap' for same-chain and 'deposit' for cross-chain; 'approve' is handled by the caller
+    const swapStep = steps?.find((step: any) => step.id !== 'approve' && step.kind === 'transaction');
     if (!swapStep?.items?.[0]?.data) {
       failed(RELAY_METADATA, chainId, sellToken, buyToken, 'No swap transaction data in response', buyTokenChainId);
     }
