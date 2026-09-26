@@ -23,12 +23,7 @@ const DEFAULT_APP_DATA = '0x0000000000000000000000000000000000000000000000000000
 const COW_AMM_METADATA: QuoteSourceMetadata<CowAMMSupport> = {
   name: 'CoW AMM',
   supports: {
-    chains: [
-      Chains.ETHEREUM.chainId,
-      Chains.GNOSIS.chainId,
-      Chains.ARBITRUM.chainId,
-      Chains.BASE.chainId,
-    ],
+    chains: [Chains.ETHEREUM.chainId, Chains.GNOSIS.chainId, Chains.ARBITRUM.chainId, Chains.BASE.chainId],
     swapAndTransfer: true,
     buyOrders: true,
   },
@@ -109,16 +104,19 @@ export class CowAMMQuoteSource extends AlwaysValidConfigAndContextSource<CowAMMS
       failed(COW_AMM_METADATA, chainId, sellToken, buyToken, `Unknown chain: ${chainId}`);
     }
 
-    const sellTokenMapped = isSameAddress(sellToken, Addresses.NATIVE_TOKEN) ? chain.wToken : sellToken;
-    const buyTokenMapped = isSameAddress(buyToken, Addresses.NATIVE_TOKEN) ? chain.wToken : buyToken;
+    // Orders are pre-signed ERC-20 orders: there is no step to wrap a native sell or unwrap a native buy,
+    // so a native pair would either fail to execute or deliver the wrapped token instead
+    if (isSameAddress(sellToken, Addresses.NATIVE_TOKEN) || isSameAddress(buyToken, Addresses.NATIVE_TOKEN)) {
+      failed(COW_AMM_METADATA, chainId, sellToken, buyToken, 'Native token pairs are not supported, use the wrapped token');
+    }
 
     const recipientAddress = recipient ?? takeFrom;
     const validTo = calculateDeadline(txValidFor ?? '30m');
     const appData = config?.appData ?? DEFAULT_APP_DATA;
 
     const quoteRequest = {
-      sellToken: sellTokenMapped,
-      buyToken: buyTokenMapped,
+      sellToken,
+      buyToken,
       receiver: recipientAddress,
       appData,
       from: takeFrom,
